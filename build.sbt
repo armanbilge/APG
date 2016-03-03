@@ -1,0 +1,5 @@
+name := "APG"
+version := "0.1.0"
+organization := "org.compevol"
+scalaVersion := "2.11.7"
+libraryDependencies += "org.compevol" %% "amh11" % "1.0.0"
