@@ -7,38 +7,33 @@ class BiallelicCoalescentLikelihood(val mu: Double, val pi: (Double, Double), va
 
   override def apply(samples: LinearSeq[BiallelicSample]): Double = {
 
+    def sorted[T : Ordering](s: Seq[T]) = s.view.zip(s.tail).forall(Function.tupled(implicitly[Ordering[T]].lteq))
+    require(sorted(samples))
+
     case class Interval(length: Double, m: Int, Ne: Double, redProb: Map[Taxon, Double])
 
-    // TODO Can't I make this any nicer?
     @tailrec
-    def recurse(intervals: LinearSeq[CoalescentInterval], samples: LinearSeq[BiallelicSample], coalT: Double, t: Double = 0, m: Int = 0, acc: List[Interval] = Nil): List[Interval] = {
-      if (samples.isEmpty) {
-        if (intervals.isEmpty)
-          acc
-        else {
-          val interval = intervals.head
-          val intervalsp = intervals.tail
-          recurse(intervalsp, samples, coalT + intervalsp.head.length, coalT, m, Interval(coalT - t, m, interval.Ne, Map()) :: acc)
-        }
-      } else {
-        val interval = intervals.head
-        val sample = samples.head
-        val c = coalT compare sample.t
-        if (c < 0) {
-          val intervalsp = intervals.tail
-          recurse(intervalsp, samples, coalT + intervalsp.head.length, coalT, m, Interval(coalT - t, m, interval.Ne, Map()) :: acc)
-        } else if (c > 0) {
-          val mp = m + sample.redProbs.size
-          recurse(intervals, samples.tail, coalT, sample.t, mp, Interval(sample.t - t, mp, interval.Ne, sample.redProbs) :: acc)
-        } else {
-          val intervalsp = intervals.tail
-          val mp = m + sample.redProbs.size
-          recurse(intervalsp, samples.tail, coalT + intervalsp.head.length, coalT, mp, Interval(coalT - t, mp, interval.Ne, sample.redProbs) :: acc)
+    def recurse(intervals: LinearSeq[CoalescentInterval], samples: LinearSeq[BiallelicSample], nextCoal: Double = 0, t: Double = 0, m: Int = 0, acc: List[Interval] = Nil): List[Interval] = {
+      samples match {
+        case sample :: samplesTail =>
+          val interval :: intervalsTail = intervals
+          math.signum(nextCoal compare sample.t) match {
+          case -1 => recurse(intervalsTail, samples, nextCoal + interval.length, nextCoal, m, Interval(nextCoal - t, m, interval.Ne, Map()) :: acc)
+          case 1 =>
+            val mp = m + sample.redProbs.size
+            recurse(intervals, samplesTail, nextCoal, sample.t, mp, Interval(sample.t - t, mp, interval.Ne, sample.redProbs) :: acc)
+          case 0 =>
+            val mp = m + sample.redProbs.size
+            recurse(intervalsTail, samplesTail, nextCoal + interval.length, nextCoal, mp, Interval(nextCoal - t, mp, interval.Ne, sample.redProbs) :: acc)
+          }
+        case Nil => intervals match {
+          case interval :: intervalsTail => recurse(intervalsTail, samples, nextCoal + interval.length, nextCoal, m, Interval(nextCoal - t, m, interval.Ne, Map()) :: acc)
+          case interval :: Nil => Interval(nextCoal + interval.length, m, interval.Ne, Map()) :: acc
         }
       }
     }
 
-    val intervals = recurse(coalescentIntervals, samples, coalescentIntervals.head.length)
+    val intervals = recurse(coalescentIntervals, samples).reverse
 
   }
 
