@@ -10,7 +10,9 @@ class BiallelicCoalescentLikelihood(val mu: Double, val pi: (Double, Double), va
     def sorted[T : Ordering](s: Seq[T]) = s.view.zip(s.tail).forall(Function.tupled(implicitly[Ordering[T]].lteq))
     require(sorted(samples))
 
-    case class Interval(length: Double, m: Int, Ne: Double, redProb: Map[Taxon, Double])
+    case class Interval(length: Double, m: Int, Ne: Double, redProb: Map[Taxon, Double]) {
+      val Q = new Q(m, mu * pi._1, mu * pi._2, Ne)()
+    }
 
     @tailrec
     def recurse(intervals: LinearSeq[CoalescentInterval], samples: LinearSeq[BiallelicSample], nextCoal: Double = 0, t: Double = 0, m: Int = 0, acc: List[Interval] = Nil): List[Interval] = {
@@ -27,8 +29,8 @@ class BiallelicCoalescentLikelihood(val mu: Double, val pi: (Double, Double), va
             recurse(intervalsTail, samplesTail, nextCoal + interval.length, nextCoal, mp, Interval(nextCoal - t, mp, interval.Ne, sample.redProbs) :: acc)
           }
         case Nil => intervals match {
-          case interval :: intervalsTail => recurse(intervalsTail, samples, nextCoal + interval.length, nextCoal, m, Interval(nextCoal - t, m, interval.Ne, Map()) :: acc)
           case interval :: Nil => Interval(nextCoal + interval.length, m, interval.Ne, Map()) :: acc
+          case interval :: intervalsTail => recurse(intervalsTail, samples, nextCoal + interval.length, nextCoal, m, Interval(nextCoal - t, m, interval.Ne, Map()) :: acc)
         }
       }
     }
