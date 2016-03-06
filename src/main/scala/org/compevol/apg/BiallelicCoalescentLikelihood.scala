@@ -37,6 +37,8 @@ class BiallelicCoalescentLikelihood(val mu: Double, val pi: (Double, Double), va
 
     val intervals = recurse(coalescentIntervals, samples).reverse
 
+    0.0
+
   }
 
 }
