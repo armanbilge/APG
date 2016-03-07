@@ -12,4 +12,9 @@ final class LineageAlleleIndices(val m: Int) {
     (n - 1) * (n + 2) / 2 + r
   }
 
+  def foreach[U](f: (Int, Int) => U) = for {
+    n <- 1 to m
+    r <- 0 to n
+  } f
+
 }

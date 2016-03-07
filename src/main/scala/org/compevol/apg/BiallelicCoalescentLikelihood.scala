@@ -37,6 +37,14 @@ class BiallelicCoalescentLikelihood(val mu: Double, val pi: (Double, Double), va
 
     val intervals = recurse(coalescentIntervals, samples).reverse
 
+    val initial = intervals.head
+    val x = new LAVector(initial.m)() { (n: Int, r: Int) =>
+      if (n == initial.m) initial.redCountPMF(r) else 0
+    }
+    intervals.tail.foldRight(x) {
+
+    }
+
   }
 
 }

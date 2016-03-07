@@ -4,10 +4,7 @@ import no.uib.cipr.matrix.DenseMatrix
 
 class Q(val m: Int, val u: Double, val v: Double, val Ne: Double)(index: LineageAlleleIndices = new LineageAlleleIndices(m)) extends DenseMatrix(index.size, index.size) {
 
-  for {
-    n <- 1 to m
-    r <- 0 to n
-  } {
+  index.foreach { (n, r) =>
     val i = index(n, r)
     if (r > 0) set(i, index(n, r - 1), (n - r + 1) * v)
     if (r < n) set(i, index(n, r + 1), (r + 1) * u)
