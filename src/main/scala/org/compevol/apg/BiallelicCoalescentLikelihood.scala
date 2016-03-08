@@ -1,5 +1,7 @@
 package org.compevol.apg
 
+import org.compevol.amh11
+
 import scala.annotation.tailrec
 import scala.collection.LinearSeq
 
@@ -41,9 +43,21 @@ class BiallelicCoalescentLikelihood(val mu: Double, val pi: (Double, Double), va
     val x = new LAVector(initial.m)() { (n: Int, r: Int) =>
       if (n == initial.m) initial.redCountPMF(r) else 0
     }
-    intervals.tail.foldRight(x) {
-
+    val y = intervals.foldRight(x) { (interval, x) =>
+      val xp = (0 to interval.m).foldLeft(new LAVector(interval.m)) { (v, i) =>
+        val p = interval.redCountPMF(i)
+        if (p > 0)
+          x.index.foreach { (n, r) =>
+            v(n + interval.m, r + i) = v(n + interval.m, r + i) + x(n, r) * p
+          }
+        v
+      }
+      val y = new LAVector(interval.m)()()
+      y.add(amh11.expmv(interval.length, interval.Q, xp))
+      y
     }
+
+    math.log(y(1, 0) * pi._1 + y(1, 1) * pi._2)
 
   }
 
