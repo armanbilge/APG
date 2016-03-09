@@ -1,7 +1,7 @@
 name := "APG"
 version := "0.1.0"
 organization := "org.compevol"
-scalaVersion := "2.11.7"
+scalaVersion := "2.11.8"
 libraryDependencies += "org.compevol" %% "amh11" % "1.0.0"
 libraryDependencies += "com.github.wendykierp" % "JTransforms" % "3.1"
 libraryDependencies += "org.spire-math" %% "spire" % "0.11.0"
