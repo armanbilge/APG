@@ -2,6 +2,8 @@ package org.compevol.apg
 
 final class LineageAlleleIndices(val m: Int) {
 
+  require(m >= 1)
+
   @inline
   val size = m * (m + 3) / 2
 
@@ -12,9 +14,10 @@ final class LineageAlleleIndices(val m: Int) {
     (n - 1) * (n + 2) / 2 + r
   }
 
+  @inline
   def foreach[U](f: (Int, Int) => U) = for {
     n <- 1 to m
     r <- 0 to n
-  } f
+  } f(n, r)
 
 }

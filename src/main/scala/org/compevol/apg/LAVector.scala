@@ -4,7 +4,7 @@ import no.uib.cipr.matrix.DenseVector
 
 class LAVector(val m: Int)(val index: LineageAlleleIndices = new LineageAlleleIndices(m))(val f: (Int, Int) => Double = (_, _) => 0) extends DenseVector(index.size) {
 
-  index.foreach(f)
+  index.foreach((n, r) => set(index(n, r), f(n, r)))
 
   def apply(n: Int, r: Int): Double = get(index(n, r))
 
