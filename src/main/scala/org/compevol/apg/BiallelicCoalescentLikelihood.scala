@@ -1,6 +1,5 @@
 package org.compevol.apg
 
-import no.uib.cipr.matrix.sparse.CompDiagMatrix
 import no.uib.cipr.matrix._
 import org.compevol.amh11
 
