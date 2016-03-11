@@ -1,6 +1,6 @@
 package org.compevol.apg
 
-import org.scalactic.{Equality, TolerantNumerics}
+import org.scalactic.Equality
 import org.scalatest.WordSpec
 
 import scala.annotation.tailrec
