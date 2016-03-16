@@ -2,7 +2,7 @@ package org.compevol.apg.mcmc
 
 import scala.util.Random
 
-class ScaleOperator(val scaleFactor: Double)(implicit _random: Random) extends Operator[Seq[Double]] {
+class ScaleOperator(val scaleFactor: Double)(implicit random: Random) extends Operator[Seq[Double]] {
 
   override def apply(t: Seq[Double]): Seq[Double] = {
     val scale = scaleFactor + random.nextDouble() * (1 / scaleFactor - scaleFactor)
