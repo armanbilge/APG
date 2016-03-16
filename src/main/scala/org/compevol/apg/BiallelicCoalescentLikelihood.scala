@@ -6,12 +6,13 @@ import org.compevol.amh11
 import scala.annotation.tailrec
 import scala.collection.LinearSeq
 
-class BiallelicCoalescentLikelihood(val mu: Double, val pi: (Double, Double), val coalescentIntervals: LinearSeq[CoalescentInterval]) extends (LinearSeq[BiallelicSample] => Double) {
+class BiallelicCoalescentLikelihood(val mu: Double, val piRed: Double, val coalescentIntervals: LinearSeq[CoalescentInterval]) extends (LinearSeq[BiallelicSample] => Double) {
 
   require(mu > 0)
-  require(pi._1 > 0 && pi._2 > 0 && pi._1 + pi._2 == 1.0)
+  require(0 < piRed && piRed < 1.0)
+  val piGreen = 1 - piRed
 
-  val beta = 1 / (1 - pi._1 * pi._1 - pi._2 * pi._2)
+  val beta = 1 / (1 - piRed * piRed - piGreen * piGreen)
 
   override def apply(samples: LinearSeq[BiallelicSample]): Double = {
 
@@ -19,7 +20,7 @@ class BiallelicCoalescentLikelihood(val mu: Double, val pi: (Double, Double), va
     require(sorted(samples))
 
     case class Interval(length: Double, m: Int, Ne: Double, redCountPMF: Int => Double) {
-      val Q = new Q(m, beta * mu * pi._1, beta * mu * pi._2, Ne)()
+      val Q = new Q(m, beta * mu * piRed, beta * mu * piGreen, Ne)()
     }
 
     // TODO Combine recursions
@@ -79,7 +80,7 @@ class BiallelicCoalescentLikelihood(val mu: Double, val pi: (Double, Double), va
     }
 
     val y = logLikelihood(intervals)
-    math.log(y.get(0) * pi._1 + y.get(1) * pi._2)
+    math.log(y.get(0) * piRed + y.get(1) * piGreen)
 
   }
 

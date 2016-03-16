@@ -7,7 +7,7 @@ class BiallelicCoalescentLikelihoodSpec extends UnitSpec {
   "BiallelicCoalescentLikelihood" when {
 
     "mu = 2.0, pi = (0.5, 0.5), intervals = [(length = Inf, Ne = 1.0)]" when {
-      val like = new BiallelicCoalescentLikelihood(2.0, (0.5, 0.5), LinearSeq(CoalescentInterval(Double.PositiveInfinity, 1.0)))
+      val like = new BiallelicCoalescentLikelihood(2.0, 0.5, LinearSeq(CoalescentInterval(Double.PositiveInfinity, 1.0)))
       "samples = [(t = 0, p_red = [0.0, 0.0])]" should {
         val sample = LinearSeq(BiallelicSample(0, Seq(0.0, 0.0)))
         "should be log(0.3)" in {
