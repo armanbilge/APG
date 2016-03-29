@@ -1,13 +1,19 @@
 package org.compevol.apg.mcmc
 
-import scala.util.Random
+import java.util
+
+import org.apache.commons.math3.distribution.EnumeratedDistribution
+import org.apache.commons.math3.random.RandomGenerator
+import org.apache.commons.math3.util.Pair
 
 case class State[S](state: S, logP: Double)
 
-class MCMC[S](val posterior: S => Double, val operators: Map[Operator[S], Double])(implicit val random: Random) {
+class MCMC[S](val posterior: S => Double, val operators: Map[Operator[S], Double])(implicit val random: RandomGenerator) {
+
+  val operatorDistribution = new EnumeratedDistribution[Operator[S]](random, util.Arrays.asList(operators.map(Function.tupled((op, w) => new Pair(op, java.lang.Double.valueOf(w)))).toSeq: _*))
 
   def chain(start: S): Iterator[S] = Iterator.iterate(State(start, posterior(start))) { s =>
-    val op = operators.keys.last
+    val op = operatorDistribution.sample()
     val sp = op(s.state)
     val spLogP = posterior(sp)
     val alpha = 0.0 min (spLogP - s.logP + op.logHastingsRatio(s.state, sp))
