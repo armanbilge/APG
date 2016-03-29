@@ -16,12 +16,15 @@ class BiallelicLikelihood(val taxa: Set[Taxon], val mu: Double, val kappa: Doubl
     })).to[LinearSeq].sorted
 
     val L = (site match {
-      case ConstantSite(n) => (Nucleotide.stateSet - n).view.map((_, n))
-      case TwoStateSite(red, green, _) => Traversable((red, green))
-    }).map(Function.tupled { (red, green) =>
-      val c = if (red.state % 2 == green.state % 2) 1.0 else kappa
-      new BiallelicCoalescentLikelihood(c * mu, pi(red) / (pi(red) + pi(green)), coalescentIntervals).apply(samples)
-    }).sum
+      case ConstantSite(n) => (Nucleotide.stateSet - n).view.map(new TwoStateSite(n, _, _ => false))
+      case s: TwoStateSite => Traversable(s)
+    }).map { site =>
+      val c = site.substitution match {
+        case Transition => kappa
+        case Transversion => 1.0
+      }
+      new BiallelicCoalescentLikelihood(c * mu, site.frequencyRed(pi), coalescentIntervals).apply(samples)
+    }.sum
 
     L * w
 

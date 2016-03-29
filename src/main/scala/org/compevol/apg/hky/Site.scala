@@ -14,6 +14,8 @@ case class TwoStateSite(red: Nucleotide, green: Nucleotide, allele: Taxon => Boo
     case _ => throw new IllegalArgumentException
   }
 
+  def frequencyRed(pi: Nucleotide => Double): Double = pi(red) / (pi(red) + pi(green))
+
 }
 
 case class ConstantSite(nuc: Nucleotide) extends Site
