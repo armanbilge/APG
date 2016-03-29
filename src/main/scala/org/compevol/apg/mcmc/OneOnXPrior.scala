@@ -1,5 +1,5 @@
 package org.compevol.apg.mcmc
 
-object OnOnXPrior extends (Double => Double) {
+object OneOnXPrior extends (Double => Double) {
   override def apply(x: Double): Double = - math.log(x)
 }
