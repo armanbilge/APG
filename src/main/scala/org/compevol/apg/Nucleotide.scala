@@ -50,14 +50,13 @@ object Nucleotide extends DataType[Nucleotide] {
     '-' -> gap
   )
 
-  val nuc2char = char2nuc map (_.swap)
+  val nuc2char = (char2nuc map (_.swap)) + (T -> 'T')
 
   val ambiguities = Map(
     A -> Set(A),
     C -> Set(C),
     G -> Set(G),
     T -> Set(T),
-    U -> Set(U),
     R -> Set(A, G),
     Y -> Set(C, T),
     M -> Set(A, C),
