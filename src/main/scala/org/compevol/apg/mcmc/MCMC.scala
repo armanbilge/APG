@@ -10,7 +10,7 @@ case class State[S](state: S, logP: Double)
 
 class MCMC[S](val posterior: S => Double, val operators: Map[Operator[S], Double])(implicit val random: RandomGenerator) {
 
-  val operatorDistribution = new EnumeratedDistribution[Operator[S]](random, util.Arrays.asList(operators.map(Function.tupled((op, w) => new Pair(op, java.lang.Double.valueOf(w)))).toSeq: _*))
+  val operatorDistribution = new EnumeratedDistribution[Operator[S]](random, util.Arrays.asList(operators.map(Function.tupled((op, w) => new Pair(op, Double.box(w)))).toSeq: _*))
 
   def chain(start: S): Iterator[S] = Iterator.iterate(State(start, posterior(start))) { s =>
     val op = operatorDistribution.sample()
