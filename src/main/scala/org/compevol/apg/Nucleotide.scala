@@ -1,6 +1,6 @@
 package org.compevol.apg
 
-final case class Nucleotide(val state: Int) extends AnyVal with State
+final case class Nucleotide(state: Int) extends AnyVal with State
 
 object Nucleotide extends DataType[Nucleotide] {
 
