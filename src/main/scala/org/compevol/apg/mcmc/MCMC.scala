@@ -12,7 +12,7 @@ class MCMC[S](val posterior: S => Double, val operators: Map[Operator[S], Double
 
   val operatorDistribution = new EnumeratedDistribution[Operator[S]](random, util.Arrays.asList(operators.map(Function.tupled((op, w) => new Pair(op, Double.box(w)))).toSeq: _*))
 
-  def chain(start: S): Iterator[S] = Iterator.iterate(State(start, posterior(start))) { s =>
+  def chain(start: S): Iterator[(Int, Double, S)] = Iterator.iterate(State(start, posterior(start))) { s =>
     val op = operatorDistribution.sample()
     val sp = op(s.state)
     val spLogP = posterior(sp)
@@ -21,6 +21,6 @@ class MCMC[S](val posterior: S => Double, val operators: Map[Operator[S], Double
       State(sp, spLogP)
     else
       s
-  }.map(_.state)
+  }.zipWithIndex.map(s => (s._2, s._1.logP, s._1.state))
 
 }
