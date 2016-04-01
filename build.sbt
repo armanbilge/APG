@@ -1,5 +1,5 @@
 name := "APG"
-version := "0.1.0"
+version := "0.1"
 organization := "org.compevol"
 scalaVersion := "2.11.8"
 libraryDependencies += "com.github.julien-truffaut" %%  "monocle-core" % "1.2.0"
@@ -8,7 +8,7 @@ libraryDependencies += "com.github.julien-truffaut" %%  "monocle-state" % "1.2.0
 libraryDependencies += "com.github.julien-truffaut" %%  "monocle-refined" % "1.2.0"
 libraryDependencies += "com.github.wendykierp" % "JTransforms" % "3.1"
 libraryDependencies += "org.apache.commons" % "commons-math3" % "3.6.1"
-libraryDependencies += "org.compevol" %% "amh11" % "1.0.0"
+libraryDependencies += "org.compevol" %% "amh11" % "1.1"
 libraryDependencies += "org.spire-math" %% "spire" % "0.11.0"
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "test"
 addCompilerPlugin("org.scalamacros" %% "paradise" % "2.1.0" cross CrossVersion.full)

@@ -76,7 +76,7 @@ class BiallelicCoalescentLikelihood(val mu: Double, val piRed: Double, val coale
         evd.getRightEigenvectors.mult(eD, new DenseMatrix(n, n)).mult(DenseLU.factorize(evd.getRightEigenvectors).solve(Matrices.identity(n)), new DenseMatrix(n, n)).mult(xp, new DenseVector(n))
       } else {
         val y = new LAVector(interval.m)()()
-        y.add(amh11.expmv(interval.length, interval.Q, xp))
+        y.add(amh11.expmv(interval.length, interval.Q, xp, approx = true))
         logLikelihood(intervals.tail, Some(y))
       }
     }
