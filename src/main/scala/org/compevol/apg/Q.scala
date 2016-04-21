@@ -2,7 +2,7 @@ package org.compevol.apg
 
 import no.uib.cipr.matrix.DenseMatrix
 
-class Q(val m: Int, val u: Double, val v: Double, val Ne: Double)(index: LineageAlleleIndices = new LineageAlleleIndices(m)) extends DenseMatrix(index.size, index.size) {
+class Q(val m: Int, val u: Double, val v: Double, val Ne: Double)(val index: LineageAlleleIndices = new LineageAlleleIndices(m)) extends DenseMatrix(index.size, index.size) {
 
   index.foreach { (n, r) =>
     val i = index(n, r)
