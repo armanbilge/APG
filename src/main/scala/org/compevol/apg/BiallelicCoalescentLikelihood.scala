@@ -82,7 +82,7 @@ class BiallelicCoalescentLikelihood(val mu: Double, val piRed: Double, val coale
     }
 
     val y = logLikelihood(intervals)
-    math.log(y.get(0) * piRed + y.get(1) * piGreen)
+    y.get(0) * piRed + y.get(1) * piGreen
 
   }
 
