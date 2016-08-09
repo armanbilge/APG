@@ -57,9 +57,9 @@ abstract public class AbstractMatrix {
         //void print(OutputStream os) {};
 
 
-        
-        
-        
+
+
+
         /**
          Computes infinity norm. pg 56 of Golub and van Loan
          **/
@@ -75,8 +75,8 @@ abstract public class AbstractMatrix {
                 norm = Math.max(norm,sum);
             }
             return norm;
-        }    
-        
+        }
+
         // 0-based vector norm
         public static double vectorNorm(double [] v) {
             int n = v.length;
@@ -85,7 +85,7 @@ abstract public class AbstractMatrix {
                 sum+=v[i]*v[i];
             return Math.sqrt(sum);
         }
-        
+
         // 1-based vector norm
         public static double vectorNorm(Vector<Double> v) {
             int n = v.size()-1;
@@ -94,9 +94,9 @@ abstract public class AbstractMatrix {
                 sum += v.elementAt(i) * v.elementAt(i);
             return Math.sqrt(sum);
         }
-        
-        
-        
+
+
+
 
 
 //    static void convolution2Dfft( Array2d A,  Array2d B, Array2d result, boolean zeroRow /*=false*/, boolean reAllocate /*= false*/) {
@@ -146,39 +146,39 @@ abstract public class AbstractMatrix {
 
 
 
-    public static void main(String [] args) {
-        //AbstractMatrix A = new QMatrix(2, 1, 1, 0.1);
-        /*
-        try { // test expm
-            int m = 2;
-            Array2d F = new Array2d(m, m);
-            Array2d smallH = new Array2d(m, m);
-            smallH.set(1,1,0.5);
-            smallH.set(1,2,0.2);
-            smallH.set(2,1,0.7);
-            smallH.set(2,2,0.3);
-            MatrixExponentiator.expm(smallH, F);
-            System.out.println(F.toString());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-            */
-        try { // test expmv
-            Vector<Double> v = new Vector<Double>(5+1);
-            v.add(0.0);
-            v.add(0.1);
-            v.add(0.2);
-            v.add(0.3);
-            v.add(0.4);
-            v.add(0.5);
-            //Vector<Double> w = MatrixExponentiator.expmv(0.01, A, v);
-            //System.out.println(w.toString());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    } // main
-    
+//    public static void main(String [] args) {
+//        //AbstractMatrix A = new QMatrix(2, 1, 1, 0.1);
+//        /*
+//        try { // test expm
+//            int m = 2;
+//            Array2d F = new Array2d(m, m);
+//            Array2d smallH = new Array2d(m, m);
+//            smallH.set(1,1,0.5);
+//            smallH.set(1,2,0.2);
+//            smallH.set(2,1,0.7);
+//            smallH.set(2,2,0.3);
+//            MatrixExponentiator.expm(smallH, F);
+//            System.out.println(F.toString());
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//            */
+//        try { // test expmv
+//            Vector<Double> v = new Vector<Double>(5+1);
+//            v.add(0.0);
+//            v.add(0.1);
+//            v.add(0.2);
+//            v.add(0.3);
+//            v.add(0.4);
+//            v.add(0.5);
+//            //Vector<Double> w = MatrixExponentiator.expmv(0.01, A, v);
+//            //System.out.println(w.toString());
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    } // main
+
     public abstract void solve(COMPLEX[] vc, COMPLEX offset, COMPLEX[] xc) throws Exception;
     public abstract void solve(double[] vc_r, double[] vc_i, double offset_r, double offset_i, double [] xc_r, double [] xc_i) throws Exception;
 
-} // class AbstractMatrix 
+} // class AbstractMatrix
