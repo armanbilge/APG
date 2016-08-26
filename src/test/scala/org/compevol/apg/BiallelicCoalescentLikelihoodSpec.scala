@@ -26,6 +26,12 @@ class BiallelicCoalescentLikelihoodSpec extends UnitSpec {
           assert(math.log(0.3) === like(sample))
         }
       }
+      "samples = [(t = 0, partial = [1, 0]), (t = 1, partial = [1, 0])]" should {
+        val sample = LinearSeq(TimePoint(0, IndexedSeq(1, 0)), TimePoint(1, IndexedSeq(1, 0)))
+        "be log(0.2509157819444367)" in {
+          assert(math.log(0.2509157819444367) === like(sample))
+        }
+      }
     }
   }
 
