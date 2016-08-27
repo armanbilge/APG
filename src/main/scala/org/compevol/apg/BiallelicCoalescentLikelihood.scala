@@ -64,7 +64,7 @@ class BiallelicCoalescentLikelihood(val mu: Double, val piRed: Double, val coale
         case Some(z) =>
           val xp = new F(interval.m)
           for (i <- 0 to interval.k; n <- 1 to z.getSize; r <- 0 to n)
-            xp.set(n + interval.k, r + i, xp.get(n + interval.k, r + i) + z.get(n, r) * interval.redCountPartial(i) * new HypergeometricDistribution(n + interval.k, r + i, interval.k).probability(i))
+            xp.set(n + interval.k, r + i, xp.get(n + interval.k, r + i) + z.get(n, r) * interval.redCountPartial(i) * new HypergeometricDistribution(null, n + interval.k, r + i, interval.k).probability(i))
           xp
         }
       if (interval.length.isInfinity) {
