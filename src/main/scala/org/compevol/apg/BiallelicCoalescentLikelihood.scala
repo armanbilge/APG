@@ -22,7 +22,7 @@ class BiallelicCoalescentLikelihood(val mu: Double, val piRed: Double, val coale
     def sorted[T : Ordering](s: Seq[T]) = s.view.zip(s.tail).forall(Function.tupled(implicitly[Ordering[T]].lteq))
     require(sorted(samples))
 
-    case class Interval(length: Double, m: Int, k: Int, Ne: Double, redCountPartial: Int => Double)
+    case class Interval(length: Double, m: Int, k: Int, coalRate: Double, redCountPartial: Int => Double)
 
     // TODO Combine recursions
 
@@ -32,20 +32,20 @@ class BiallelicCoalescentLikelihood(val mu: Double, val piRed: Double, val coale
         case sample :: samplesTail =>
           val interval :: intervalsTail = intervals
           math.signum(nextCoal compare sample.t) match {
-          case -1 => createIntervals(intervalsTail, samples, nextCoal + interval.length, nextCoal, m, Interval(nextCoal - t, m, 0, interval.Ne, Map(m -> 1.0).withDefaultValue(0.0)) :: acc)
+          case -1 => createIntervals(intervalsTail, samples, nextCoal + interval.length, nextCoal, m, Interval(nextCoal - t, m, 0, 1 / interval.Ne, Map(m -> 1.0).withDefaultValue(0.0)) :: acc)
           case 1 =>
             val k = sample.k
             val mp = m + k
             val nextEvent = nextCoal min samplesTail.headOption.map(_.t).getOrElse(Double.PositiveInfinity)
-            createIntervals(intervals, samplesTail, nextCoal, nextEvent, mp, Interval(nextEvent - t, mp, k, interval.Ne, sample.redCountPartial) :: acc)
+            createIntervals(intervals, samplesTail, nextCoal, nextEvent, mp, Interval(nextEvent - t, mp, k, 1 / interval.Ne, sample.redCountPartial) :: acc)
           case 0 =>
             val k = sample.k
             val mp = m + k
-            createIntervals(intervalsTail, samplesTail, nextCoal + interval.length, nextCoal, mp, Interval(nextCoal - t, mp, k, interval.Ne, sample.redCountPartial) :: acc)
+            createIntervals(intervalsTail, samplesTail, nextCoal + interval.length, nextCoal, mp, Interval(nextCoal - t, mp, k, 1 / interval.Ne, sample.redCountPartial) :: acc)
           }
         case Nil => intervals match {
           case interval :: Nil => acc
-          case interval :: intervalsTail => createIntervals(intervalsTail, samples, nextCoal + interval.length, nextCoal, m, Interval(nextCoal - t, m, 0, interval.Ne, Map(m -> 1.0).withDefaultValue(0.0)) :: acc)
+          case interval :: intervalsTail => createIntervals(intervalsTail, samples, nextCoal + interval.length, nextCoal, m, Interval(nextCoal - t, m, 0, 1 / interval.Ne, Map(m -> 1.0).withDefaultValue(0.0)) :: acc)
         }
       }
     }
@@ -68,14 +68,14 @@ class BiallelicCoalescentLikelihood(val mu: Double, val piRed: Double, val coale
           xp
         }
       if (interval.length.isInfinity) {
-        val z = new Q(interval.m, u, v, interval.Ne).findOrthogonalVector(false)
+        val z = new Q(interval.m, u, v, interval.coalRate).findOrthogonalVector(false)
         val l = (xp.asVectorCopyBase1(), z).zipped.map(_ * _).sum / (z(1) + z(2))
         val y = new F(1)
         y.set(1, 0, l)
         y.set(1, 1, l)
         y
       } else {
-        logLikelihood(intervals.tail, Some(MatrixExponentiator.expQTtx(interval.m, u, v, interval.Ne, interval.length, xp)))
+        logLikelihood(intervals.tail, Some(MatrixExponentiator.expQTtx(interval.m, u, v, interval.coalRate, interval.length, xp)))
       }
     }
 
