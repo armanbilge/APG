@@ -1,8 +1,5 @@
 package org.compevol.apg
 
-import org.apache.commons.math3.distribution.HypergeometricDistribution
-import org.apache.commons.math3.exception.NotStrictlyPositiveException
-
 import scala.annotation.tailrec
 import scala.collection.LinearSeq
 
@@ -14,13 +11,7 @@ class BiallelicCoalescentLikelihood(val data: IndexedSeq[LinearSeq[TimePoint]]) 
     val I = data.head.map(_.k).sum
     Array.tabulate(I+1) { N =>
       Array.tabulate(N+1, N+1) { (K, n) =>
-        Array.tabulate(n+1) { k =>
-          try {
-            new HypergeometricDistribution(null, N, K, n).probability(k)
-          } catch {
-            case _: NotStrictlyPositiveException => 0.0
-          }
-        }
+        Array.tabulate(n+1)(HypergeometricPMF(N, K, n))
       }
     }
   }
