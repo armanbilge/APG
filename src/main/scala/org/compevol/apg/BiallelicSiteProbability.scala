@@ -14,7 +14,7 @@ class BiallelicSiteProbability(val piRed: Double, hypergeometricDistribution: (I
   def apply(intervals: LinearSeq[BiallelicCoalescentInterval], partials: LinearSeq[Int => Double]): Double = {
 
     @tailrec
-    def logLikelihood(intervals: LinearSeq[BiallelicCoalescentInterval], partials: LinearSeq[Int => Double], x: Option[F] = None): F = {
+    def logLikelihood(intervals: LinearSeq[BiallelicCoalescentInterval], partials: LinearSeq[Int => Double], x: Option[F] = None, c: Double = 1): F = {
       val interval = intervals.head
       val (partial, partialsTail) = if (interval.k > 0)
         (partials.head, partials.tail)
@@ -29,18 +29,20 @@ class BiallelicSiteProbability(val piRed: Double, hypergeometricDistribution: (I
         case Some(z) =>
           val xp = new F(interval.m)
           for (i <- 0 to interval.k; n <- 1 to z.getSize; r <- 0 to n)
-            xp.set(n + interval.k, r + i, xp.get(n + interval.k, r + i) + z.get(n, r) * partial(i) * hypergeometricDistribution(n + interval.k, r + i, interval.k).apply(i))
+            xp.set(n + interval.k, r + i, xp.get(n + interval.k, r + i) + math.max(z.get(n, r), 0) * partial(i) * hypergeometricDistribution(n + interval.k, r + i, interval.k).apply(i))
           xp
       }
       interval match {
         case infiniteInterval: InfiniteBiallelicCoalescentInterval =>
-          val l = (xp.asVectorCopyBase1(), infiniteInterval.pi).zipped.map(_ * _).sum
+          val l = c * (xp.asVectorCopyBase1(), infiniteInterval.pi).zipped.map(_ * _).sum
           val y = new F(1)
           y.set(1, 0, l)
           y.set(1, 1, l)
           y
         case finiteInterval: FiniteBiallelicCoalescentInterval =>
-          logLikelihood(intervals.tail, partialsTail, Some(MatrixExponentiator.expQTtx(finiteInterval.m, finiteInterval.u, finiteInterval.v, finiteInterval.coalRate, finiteInterval.length, xp)))
+          val cp = (for (n <- 1 to xp.getSize; r <- 0 to n) yield xp.get(n, r)).max
+          val xpp = for (n <- 1 to xp.getSize; r <- 0 to n) xp.set(n, r, xp.get(n, r) / cp)
+          logLikelihood(intervals.tail, partialsTail, Some(MatrixExponentiator.expQTtx(finiteInterval.m, finiteInterval.u, finiteInterval.v, finiteInterval.coalRate, finiteInterval.length, xp)), c * cp)
       }
     }
 
