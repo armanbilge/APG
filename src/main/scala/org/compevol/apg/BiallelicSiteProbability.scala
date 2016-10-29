@@ -1,12 +1,11 @@
 package org.compevol.apg
 
-import org.apache.commons.math3.distribution.HypergeometricDistribution
 import snap.likelihood.MatrixExponentiator
 
 import scala.annotation.tailrec
 import scala.collection.LinearSeq
 
-class BiallelicSiteProbability(val piRed: Double, hypergeometricDistribution: (Int, Int, Int) => (Int => Double) = (N, K, n) => new HypergeometricDistribution(null, N, K, n).probability) extends ((LinearSeq[BiallelicCoalescentInterval], LinearSeq[Int => Double]) => Double) {
+class BiallelicSiteProbability(val piRed: Double, hypergeometricDistribution: (Int, Int, Int) => (Int => Double) = (N, K, n) => HypergeometricPMF(N, K, n)) extends ((LinearSeq[BiallelicCoalescentInterval], LinearSeq[Int => Double]) => Double) {
 
   require(0 < piRed && piRed < 1.0)
   val piGreen = 1 - piRed
