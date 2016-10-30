@@ -46,7 +46,7 @@ class BiallelicSiteProbability(val piRed: Double, hypergeometricDistribution: (I
     }
 
     val y = logLikelihood(intervals, partials)
-    math.log(y.get(1, 0) * piGreen + y.get(1, 1) * piRed)
+    y.get(1, 0) * piGreen + y.get(1, 1) * piRed
 
   }
 

@@ -16,22 +16,22 @@ class BiallelicCoalescentLikelihoodSpec extends UnitSpec {
 
         "samples = [[1, 0, 0]]" should {
           val samples = LinearSeq(IndexedSeq[Double](1, 0, 0))
-          "be log(0.3)" in {
-            assert(math.log(0.3) === like(intervals, samples))
+          "be 0.3" in {
+            assert(0.3 === like(intervals, samples))
           }
         }
 
         "samples = [[0, 1, 0]]" should {
           val sample = LinearSeq(IndexedSeq[Double](0, 1, 0))
-          "be log(0.4)" in {
-            assert(math.log(0.4) === like(intervals, sample))
+          "be 0.4" in {
+            assert(0.4 === like(intervals, sample))
           }
         }
 
         "samples = [[0, 0, 1]]" should {
           val sample = LinearSeq(IndexedSeq[Double](0, 0, 1))
-          "be log(0.3)" in {
-            assert(math.log(0.3) === like(intervals, sample))
+          "be 0.3" in {
+            assert(0.3 === like(intervals, sample))
           }
         }
 
@@ -43,29 +43,29 @@ class BiallelicCoalescentLikelihoodSpec extends UnitSpec {
 
         "samples = [[1, 0], [1, 0]]" should {
           val samples = LinearSeq(IndexedSeq[Double](1, 0), IndexedSeq[Double](1, 0))
-          "be log(0.25676676416183064)" in {
-            assert(math.log(0.25676676416183064) === like(intervals, samples))
+          "be 0.25676676416183064" in {
+            assert(0.25676676416183064 === like(intervals, samples))
           }
         }
 
         "samples = [[0, 1], [0, 1]]" should {
           val samples = LinearSeq(IndexedSeq[Double](0, 1), IndexedSeq[Double](0, 1))
-          "be log(0.25676676416183064)" in {
-            assert(math.log(0.25676676416183064) === like(intervals, samples))
+          "be 0.25676676416183064" in {
+            assert(0.25676676416183064 === like(intervals, samples))
           }
         }
 
         "samples = [[1, 0], [0, 1]]" should {
           val samples = LinearSeq(IndexedSeq[Double](1, 0), IndexedSeq[Double](0, 1))
-          "be log(0.24908421805557)" in {
-            assert(math.log(0.24323323583816936) === like(intervals, samples))
+          "be 0.24908421805557" in {
+            assert(0.24323323583816936 === like(intervals, samples))
           }
         }
 
         "samples = [[0, 1], [1, 0]]" should {
           val samples = LinearSeq(IndexedSeq[Double](0, 1), IndexedSeq[Double](1, 0))
-          "be log(0.24908421805557)" in {
-            assert(math.log(0.24323323583816936) === like(intervals, samples))
+          "be 0.24908421805557" in {
+            assert(0.24323323583816936 === like(intervals, samples))
           }
         }
 

@@ -3,9 +3,9 @@ package org.compevol.apg
 import scala.annotation.tailrec
 import scala.collection.LinearSeq
 
-class BiallelicCoalescentLikelihood(val data: IndexedSeq[LinearSeq[TimePoint]]) extends ((Double, Double, LinearSeq[CoalescentInterval]) => Double) {
+class BiallelicCoalescentLikelihood(val data: IndexedSeq[LinearSeq[TimePoint]]) extends ((Double, Double, LinearSeq[CoalescentInterval]) => FireFlyLikelihood[LinearSeq[BiallelicCoalescentInterval], LinearSeq[Int => Double]]) {
 
-  private[this] val transformedData = data.map(_.map(_.redCountPartial)).par
+  private[this] val transformedData = data.map(_.map(_.redCountPartial))
 
   private[this] val cachedHypergeometricDistribution = {
     val I = data.head.map(_.k).sum
@@ -18,7 +18,7 @@ class BiallelicCoalescentLikelihood(val data: IndexedSeq[LinearSeq[TimePoint]]) 
 
   private[this] def hypergeometricDistribution(N: Int, K: Int, n: Int)(k: Int) = cachedHypergeometricDistribution(N)(K)(n)(k)
 
-  override def apply(mu: Double, piRed: Double, coalIntervals: LinearSeq[CoalescentInterval]): Double = {
+  override def apply(mu: Double, piRed: Double, coalIntervals: LinearSeq[CoalescentInterval]): FireFlyLikelihood[LinearSeq[BiallelicCoalescentInterval], LinearSeq[Int => Double]] = {
 
     require(mu > 0)
     val piGreen = 1 - piRed
@@ -53,8 +53,16 @@ class BiallelicCoalescentLikelihood(val data: IndexedSeq[LinearSeq[TimePoint]]) 
 
     val intervals = createIntervals(coalIntervals, data.head, coalIntervals.head.length).reverse
     val siteProb = new BiallelicSiteProbability(piRed, hypergeometricDistribution)
+    val greenBound = siteProb(intervals, Stream.continually(i => if (i == 0) 1 else 0))
+    val redBound = siteProb(intervals, intervals.map(interval => (i: Int) => if (i == interval.m) 1.0 else 0.0))
+    def B(intervals: LinearSeq[BiallelicCoalescentInterval], data: LinearSeq[Int => Double]) = {
+      if (data.head(0) > data.head(intervals.head.m))
+        greenBound * data.map(_(0)).product
+      else
+        redBound * (intervals, data).zipped.map((i, d) => d(i.m)).product
+    }
 
-    transformedData.map(partials => siteProb(intervals, partials)).sum
+    new FireFlyLikelihood[LinearSeq[BiallelicCoalescentInterval], LinearSeq[Int => Double]](intervals, transformedData, siteProb, B)
 
   }
 
