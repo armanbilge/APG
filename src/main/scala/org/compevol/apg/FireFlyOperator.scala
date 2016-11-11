@@ -1,6 +1,7 @@
-package org.compevol.apg.mcmc
+package org.compevol.apg
 
 import org.apache.commons.math3.random.RandomGenerator
+import org.compevol.mcmc.Operator
 
 class FireFlyOperator(val n: Int)(implicit random: RandomGenerator) extends Operator[Set[Int]] {
 

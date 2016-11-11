@@ -1,4 +1,4 @@
-package org.compevol.apg.mcmc
+package org.compevol.mcmc
 
 import monocle.Lens
 
