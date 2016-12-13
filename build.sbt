@@ -7,6 +7,7 @@ libraryDependencies += "com.github.julien-truffaut" %%  "monocle-core" % monocle
 libraryDependencies += "com.github.julien-truffaut" %%  "monocle-macro" % monocleVersion
 libraryDependencies += "com.github.julien-truffaut" %%  "monocle-state" % monocleVersion
 libraryDependencies += "com.github.julien-truffaut" %%  "monocle-refined" % monocleVersion
+libraryDependencies += "com.lihaoyi" % "ammonite" % "0.8.1" cross CrossVersion.full
 libraryDependencies += "org.apache.commons" % "commons-math3" % "3.6.1"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test"
 addCompilerPlugin("org.scalamacros" %% "paradise" % "2.1.0" cross CrossVersion.full)
