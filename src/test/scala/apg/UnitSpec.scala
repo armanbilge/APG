@@ -1,4 +1,4 @@
-package org.compevol.apg
+package apg
 
 import org.scalactic.Equality
 import org.scalatest.WordSpec

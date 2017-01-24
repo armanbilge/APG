@@ -1,4 +1,4 @@
-package org.compevol.apg
+package apg
 
 import java.io.File
 
