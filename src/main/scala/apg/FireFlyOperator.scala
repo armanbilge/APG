@@ -3,9 +3,10 @@ package apg
 import mcmc.{Operator, Probability}
 import spire.random.Generator
 
+import scala.collection.IterableLike
 import scala.collection.generic.CanBuildFrom
 
-class FireFlyOperator[B, P <: Probability[Double], L <: Probability[Double], C <: Iterable[DatumLikelihood[B, P, L]]](val `q_d->b`: Double)(implicit rng: Generator, cbf: CanBuildFrom[Iterable[DatumLikelihood[B, P, L]], DatumLikelihood[B, P, L], C]) extends Operator[C, Double] {
+class FireFlyOperator[B, P <: Probability[Double], L <: Probability[Double], C <: IterableLike[DatumLikelihood[B, P, L], C]](val `q_d->b`: Double)(implicit rng: Generator, cbf: CanBuildFrom[C, DatumLikelihood[B, P, L], C]) extends Operator[C, Double] {
 
   override def apply(c: C): C = c.map[DatumLikelihood[B, P, L], C] { dl =>
     if (dl.lit) {
