@@ -19,8 +19,14 @@ class BiallelicSiteLikelihood(val piRed: Double, val F: CachedF) extends Probabi
 object BiallelicSiteLikelihood {
 
   def createCachedF(intervals: LinearSeq[BiallelicCoalescentInterval], partials: LinearSeq[Int => Double]): CachedF = {
-    require(intervals.length == partials.length)
-    (intervals.tail, partials.tail).zipped.foldLeft[CachedF](new Base(intervals.head, partials.head))((cf, ip) => new Nested(ip._1, ip._2, cf))
+    val intervalsIterator = intervals.iterator
+    val partialsIterator = partials.iterator
+    var F: CachedF = new Base(intervalsIterator.next(), partialsIterator.next())
+    while (intervalsIterator.hasNext) {
+      val interval = intervalsIterator.next()
+      F = new Nested(interval, if (interval.k > 0) partialsIterator.next() else _ => 0.0, F)
+    }
+    F
   }
 
   abstract class CachedF(val fc: (F, Double), val interval: BiallelicCoalescentInterval) {
