@@ -60,7 +60,7 @@ object BiallelicCoalescentLikelihood {
         case sample :: samplesTail =>
           val interval :: intervalsTail = intervals
           math.signum(nextCoal compare sample.t) match {
-            case -1 => recurse(intervalsTail, samples, nextCoal + interval.length, nextCoal, m, coalIndex + 1, BiallelicCoalescentInterval(nextCoal - t, m, 0, u, v, 1 / interval.Ne, coalIndex) :: acc)
+            case -1 => recurse(intervalsTail, samples, nextCoal + intervalsTail.head.length, nextCoal, m, coalIndex + 1, BiallelicCoalescentInterval(nextCoal - t, m, 0, u, v, 1 / interval.Ne, coalIndex) :: acc)
             case 1 =>
               val k = sample.k
               val mp = m + k
@@ -69,11 +69,11 @@ object BiallelicCoalescentLikelihood {
             case 0 =>
               val k = sample.k
               val mp = m + k
-              recurse(intervalsTail, samplesTail, nextCoal + interval.length, nextCoal, mp, coalIndex + 1, BiallelicCoalescentInterval(nextCoal - t, mp, k, u, v, 1 / interval.Ne, coalIndex) :: acc)
+              recurse(intervalsTail, samplesTail, nextCoal + intervalsTail.head.length, nextCoal, mp, coalIndex + 1, BiallelicCoalescentInterval(nextCoal - t, mp, k, u, v, 1 / interval.Ne, coalIndex) :: acc)
           }
         case Nil => intervals match {
           case interval :: Nil => acc
-          case interval :: intervalsTail => recurse(intervalsTail, samples, nextCoal + interval.length, nextCoal, m, coalIndex + 1, BiallelicCoalescentInterval(nextCoal - t, m, 0, u, v, 1 / interval.Ne, coalIndex) :: acc)
+          case interval :: intervalsTail => recurse(intervalsTail, samples, nextCoal + intervalsTail.head.length, nextCoal, m, coalIndex + 1, BiallelicCoalescentInterval(nextCoal - t, m, 0, u, v, 1 / interval.Ne, coalIndex) :: acc)
         }
       }
     }
