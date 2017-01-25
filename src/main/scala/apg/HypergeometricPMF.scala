@@ -23,12 +23,12 @@ object HypergeometricPMF extends ((Int, Int, Int) => (Int => Double)) {
 
   private def pmf(N: Int, K: Int, n: Int, k: Int): Double = {
     try {
-      new HypergeometricDistribution(N, K, n).probability(k) match {
+      new HypergeometricDistribution(null, N, K, n).probability(k) match {
         case nan if nan.isNaN =>
           val p = n.toDouble / N
-          val p1 = new BinomialDistribution(K, p).logProbability(k)
-          val p2 = new BinomialDistribution(N - K, p).logProbability(n - k)
-          val p3 = new BinomialDistribution(N, p).logProbability(n)
+          val p1 = new BinomialDistribution(null, K, p).logProbability(k)
+          val p2 = new BinomialDistribution(null, N - K, p).logProbability(n - k)
+          val p3 = new BinomialDistribution(null, N, p).logProbability(n)
           math.exp(p1 + p2 - p3)
         case p => p
       }
