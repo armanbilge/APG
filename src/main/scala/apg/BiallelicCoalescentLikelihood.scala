@@ -25,12 +25,13 @@ class BiallelicCoalescentLikelihood[B, M, Π, Θ](val lights: IndexedSeq[DatumLi
 object BiallelicCoalescentLikelihood {
 
   def apply[B, M, Π, Θ](lit: IndexedSeq[Boolean @@ B], mu: Double @@ M, piRed: Double @@ Π, coalIntervals: LinearSeq[CoalescentInterval[Θ]], data: IndexedSeq[LinearSeq[TimePoint]]): BiallelicCoalescentLikelihood[B, M, Π, Θ] = {
-    val greenBound = new BiallelicSiteLikelihood(piRed, BiallelicSiteLikelihood.createCachedF(createIntervals(mu, piRed, coalIntervals, data.head.map(tp => tp.copy(redCountPartial = IndexedSeq.fill(tp.redCountPartial.length)(0.0).updated(0, 1.0))))))
-    val redBound = new BiallelicSiteLikelihood(piRed, BiallelicSiteLikelihood.createCachedF(createIntervals(mu, piRed, coalIntervals, data.head.map(tp => tp.copy(redCountPartial = IndexedSeq.fill(tp.redCountPartial.length)(0.0).updated(tp.redCountPartial.length - 1, 1.0))))))
+
+    val intervals = createIntervals(mu, piRed, coalIntervals, data.head)
+    val greenBound = new BiallelicSiteLikelihood(piRed, BiallelicSiteLikelihood.createCachedF(intervals, List.fill(intervals.size)(i => if (i == 0) 1.0 else 0.0)))
+    val redBound = new BiallelicSiteLikelihood(piRed, BiallelicSiteLikelihood.createCachedF(intervals, intervals.map(interval => (i: Int) => if (i == interval.k) 1.0 else 0.0)))
     val lights = (data, lit).zipped.map { (sample, lit) =>
-      val intervals = createIntervals(mu, piRed, coalIntervals, sample)
       val partials = sample.map(_.redCountPartial)
-      val F = BiallelicSiteLikelihood.createCachedF(intervals)
+      val F = BiallelicSiteLikelihood.createCachedF(intervals, partials.toList)
       val like = new BiallelicSiteLikelihood(piRed, F)
       val bound = if (partials.head.head > partials.head.last)
         new Scaled(greenBound, partials.map(_.head).product)
@@ -59,20 +60,20 @@ object BiallelicCoalescentLikelihood {
         case sample :: samplesTail =>
           val interval :: intervalsTail = intervals
           math.signum(nextCoal compare sample.t) match {
-            case -1 => recurse(intervalsTail, samples, nextCoal + intervalsTail.head.length, nextCoal, m, coalIndex + 1, BiallelicCoalescentInterval(nextCoal - t, m, 0, u, v, 1 / interval.Ne, coalIndex, _ => 0.0) :: acc)
+            case -1 => recurse(intervalsTail, samples, nextCoal + intervalsTail.head.length, nextCoal, m, coalIndex + 1, BiallelicCoalescentInterval(nextCoal - t, m, 0, u, v, 1 / interval.Ne, coalIndex) :: acc)
             case 1 =>
               val k = sample.k
               val mp = m + k
               val nextEvent = nextCoal min samplesTail.headOption.map(_.t).getOrElse(Double.PositiveInfinity)
-              recurse(intervals, samplesTail, nextCoal, nextEvent, mp, coalIndex, BiallelicCoalescentInterval(nextEvent - t, mp, k, u, v, 1 / interval.Ne, coalIndex, sample.redCountPartial) :: acc)
+              recurse(intervals, samplesTail, nextCoal, nextEvent, mp, coalIndex, BiallelicCoalescentInterval(nextEvent - t, mp, k, u, v, 1 / interval.Ne, coalIndex) :: acc)
             case 0 =>
               val k = sample.k
               val mp = m + k
-              recurse(intervalsTail, samplesTail, nextCoal + intervalsTail.head.length, nextCoal, mp, coalIndex + 1, BiallelicCoalescentInterval(nextCoal - t, mp, k, u, v, 1 / interval.Ne, coalIndex, sample.redCountPartial) :: acc)
+              recurse(intervalsTail, samplesTail, nextCoal + intervalsTail.head.length, nextCoal, mp, coalIndex + 1, BiallelicCoalescentInterval(nextCoal - t, mp, k, u, v, 1 / interval.Ne, coalIndex) :: acc)
           }
         case Nil => intervals match {
           case interval :: Nil => acc
-          case interval :: intervalsTail => recurse(intervalsTail, samples, nextCoal + intervalsTail.head.length, nextCoal, m, coalIndex + 1, BiallelicCoalescentInterval(nextCoal - t, m, 0, u, v, 1 / interval.Ne, coalIndex, _ => 0.0) :: acc)
+          case interval :: intervalsTail => recurse(intervalsTail, samples, nextCoal + intervalsTail.head.length, nextCoal, m, coalIndex + 1, BiallelicCoalescentInterval(nextCoal - t, m, 0, u, v, 1 / interval.Ne, coalIndex) :: acc)
         }
       }
     }
@@ -81,32 +82,9 @@ object BiallelicCoalescentLikelihood {
 
   }
 
-  implicit def mu[B, M, Π, Θ]: Lens[BiallelicCoalescentLikelihood[B, M, Π, Θ], Double @@ M] = Lens[BiallelicCoalescentLikelihood[B, M, Π, Θ], Double @@ M](_.mu)(mu => { bcl =>
-    val piRed = bcl.piRed
-    val piGreen = 1 - piRed
-    val beta = 1 / (1 - piRed * piRed - piGreen * piGreen)
-    val u = beta * mu * piRed
-    val v = beta * mu * piGreen
-    updatedUV(u, v)(bcl)
-  })
+  implicit def mu[B, M, Π, Θ]: Lens[BiallelicCoalescentLikelihood[B, M, Π, Θ], Double @@ M] = Lens[BiallelicCoalescentLikelihood[B, M, Π, Θ], Double @@ M](_.mu)(mu => bcl => apply(bcl.lights.map(_.lit), mu, bcl.piRed, bcl.coalIntervals, bcl.data))
 
-  implicit def piRed[B, M, Π, Θ]: Lens[BiallelicCoalescentLikelihood[B, M, Π, Θ], Double @@ Π] = Lens[BiallelicCoalescentLikelihood[B, M, Π, Θ], Double @@ Π](_.piRed)(piRed => { bcl =>
-    val piGreen = 1 - piRed
-    val beta = 1 / (1 - piRed * piRed - piGreen * piGreen)
-    val u = beta * bcl.mu * piRed
-    val v = beta * bcl.mu * piGreen
-    updatedUV(u, v)(bcl)
-  })
-
-  def updatedUV[B, M, Π, Θ](u: Double, v: Double)(bcl: BiallelicCoalescentLikelihood[B, M, Π, Θ]): BiallelicCoalescentLikelihood[B, M, Π, Θ] = {
-    val greenBound = bcl.greenBound.updatedUV(u, v)
-    val redBound = bcl.redBound.updatedUV(u, v)
-    val lights = bcl.lights.map { light =>
-      val bound = if (light.lower.p eq bcl.greenBound) greenBound else redBound
-      new DatumLikelihood(light.lit, light.probability.updatedUV(u, v), new Scaled(bound, light.lower.scale))
-    }
-    new BiallelicCoalescentLikelihood[B, M, Π, Θ](lights, greenBound, redBound, bcl.mu, bcl.piRed, bcl.coalIntervals, bcl.data)
-  }
+  implicit def piRed[B, M, Π, Θ]: Lens[BiallelicCoalescentLikelihood[B, M, Π, Θ], Double @@ Π] = Lens[BiallelicCoalescentLikelihood[B, M, Π, Θ], Double @@ Π](_.piRed)(piRed => bcl => apply(bcl.lights.map(_.lit), bcl.mu, piRed, bcl.coalIntervals, bcl.data))
 
   implicit def atNe[B, M, Π, Θ]: At[BiallelicCoalescentLikelihood[B, M, Π, Θ], Int, Double @@ Θ] = { (i: Int) =>
     Lens[BiallelicCoalescentLikelihood[B, M, Π, Θ], Double @@ Θ](_.coalIntervals(i).Ne)(Ne => { bcl =>
