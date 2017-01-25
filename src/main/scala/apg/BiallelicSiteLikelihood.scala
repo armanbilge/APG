@@ -20,7 +20,7 @@ object BiallelicSiteLikelihood {
 
   def createCachedF(intervals: LinearSeq[BiallelicCoalescentInterval], partials: LinearSeq[Int => Double]): CachedF = {
     require(intervals.length == partials.length)
-    (intervals.tail, partials.tail).zipped.foldRight[CachedF](new Base(intervals.head, partials.head))((ip, cf) => new Nested(ip._1, ip._2, cf))
+    (intervals.tail, partials.tail).zipped.foldLeft[CachedF](new Base(intervals.head, partials.head))((cf, ip) => new Nested(ip._1, ip._2, cf))
   }
 
   abstract class CachedF(val fc: (F, Double), val interval: BiallelicCoalescentInterval) {
