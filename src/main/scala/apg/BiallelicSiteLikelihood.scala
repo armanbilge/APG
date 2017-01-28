@@ -29,8 +29,8 @@ object BiallelicSiteLikelihood {
     F
   }
 
-  abstract class CachedF(val fc: (F, Double), val interval: BiallelicCoalescentInterval) {
-    private[this] val (fp, cp) = fc
+  abstract class CachedF(fc: => (F, Double), val interval: BiallelicCoalescentInterval) {
+    private[this] lazy val (fp, cp) = fc
     lazy val (f, c): (F, Double) = interval match {
       case infiniteInterval: InfiniteBiallelicCoalescentInterval =>
         import spire.std.array._
