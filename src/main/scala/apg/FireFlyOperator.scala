@@ -19,7 +19,7 @@ class FireFlyOperator[B, P <: Probability[Double], L <: Probability[Double], C <
     } else if (rng.nextDouble() < `q_d->b`) {
       val u = rng.nextDouble()
       val Ltilde = (dl.probability.evaluate - dl.lower.evaluate) / dl.lower.evaluate
-      if (Ltilde / `q_d->b` < u)
+      if (Ltilde / `q_d->b` > u)
         dl.flipped
       else
         dl
