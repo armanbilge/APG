@@ -24,7 +24,7 @@ case class FiniteBiallelicCoalescentInterval(length: Double, m: Int, k: Int, u: 
 
 case class InfiniteBiallelicCoalescentInterval(m: Int, k: Int, u: Double, v: Double, coalRate: Double, coalIndex: Int) extends BiallelicCoalescentInterval {
 
-  val pi = {
+  lazy val pi = {
     import spire.std.array._
     import spire.std.double._
     import spire.syntax.vectorSpace._
