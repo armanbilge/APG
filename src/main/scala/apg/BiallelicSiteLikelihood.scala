@@ -50,9 +50,12 @@ object BiallelicSiteLikelihood {
   }
 
   class Nested(interval: BiallelicCoalescentInterval, partial: Int => Double, previousF: CachedF) extends CachedF({
-    val F = new F(interval.m)
-    for (i <- 0 to interval.k; n <- 1 to previousF.f.getSize; r <- 0 to n)
-      F.set(n + interval.k, r + i, F.get(n + interval.k, r + i) + math.max(previousF.f.get(n, r), 0) * partial(i) * HypergeometricPMF(n + interval.k, r + i, interval.k).apply(i))
+    val F = if (interval.k > 0) {
+      val F = new F(interval.m)
+      for (i <- 0 to interval.k; n <- 1 to previousF.f.getSize; r <- 0 to n)
+        F.set(n + interval.k, r + i, F.get(n + interval.k, r + i) + math.max(previousF.f.get(n, r), 0) * partial(i) * HypergeometricPMF(n + interval.k, r + i, interval.k).apply(i))
+      F
+    } else previousF.f
     (F, previousF.c)
   }, interval) {
 
