@@ -27,8 +27,8 @@ object BiallelicCoalescentLikelihood {
   def apply[B, M, Π, Θ](lit: IndexedSeq[Boolean @@ B], mu: Double @@ M, piRed: Double @@ Π, coalIntervals: LinearSeq[CoalescentInterval[Θ]], data: IndexedSeq[LinearSeq[TimePoint]]): BiallelicCoalescentLikelihood[B, M, Π, Θ] = {
 
     val intervals = createIntervals(mu, piRed, coalIntervals, data.head)
-    val greenBound = new BiallelicSiteLikelihood(piRed, BiallelicSiteLikelihood.createCachedF(intervals, List.fill(intervals.size)(i => if (i == 0) 1.0 else 0.0)))
-    val redBound = new BiallelicSiteLikelihood(piRed, BiallelicSiteLikelihood.createCachedF(intervals, intervals.map(interval => (i: Int) => if (i == interval.k) 1.0 else 0.0)))
+    val greenBound = new BiallelicSiteLikelihood(piRed, BiallelicSiteLikelihood.createCachedF(intervals, List.fill(data.head.size)(i => if (i == 0) 1.0 else 0.0)))
+    val redBound = new BiallelicSiteLikelihood(piRed, BiallelicSiteLikelihood.createCachedF(intervals, data.head.map(_.redCountPartial.length - 1).map(k => (i: Int) => if (i == k) 1.0 else 0.0)))
     val lights = (data, lit).zipped.map { (sample, lit) =>
       val partials = sample.map(_.redCountPartial)
       val F = BiallelicSiteLikelihood.createCachedF(intervals, partials.toList)
