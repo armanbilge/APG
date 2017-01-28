@@ -96,7 +96,7 @@ object BiallelicCoalescentLikelihood {
         val bound = if (light.lower.p eq bcl.greenBound) greenBound else redBound
         new DatumLikelihood(light.lit, light.probability.updatedCoalRate(i, coalRate), new Scaled(bound, light.lower.scale))
       }
-      new BiallelicCoalescentLikelihood[B, M, Π, Θ](lights, greenBound, redBound, bcl.mu, bcl.piRed, bcl.coalIntervals, bcl.data)
+      new BiallelicCoalescentLikelihood[B, M, Π, Θ](lights, greenBound, redBound, bcl.mu, bcl.piRed, coalIntervals, bcl.data)
     })
   }
 
