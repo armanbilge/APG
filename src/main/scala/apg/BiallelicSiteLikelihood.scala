@@ -42,9 +42,9 @@ object BiallelicSiteLikelihood {
         y.set(1, 1, l)
         (y, 1)
       case finiteInterval: FiniteBiallelicCoalescentInterval =>
-        val cp = (for (n <- 1 to fp.getSize; r <- 0 to n) yield fp.get(n, r)).max
-        for (n <- 1 to fp.getSize; r <- 0 to n) fp.set(n, r, fp.get(n, r) / cp)
-        (MatrixExponentiator.expQTtx(finiteInterval.m, finiteInterval.u, finiteInterval.v, finiteInterval.coalRate, finiteInterval.length, fp), cp * cp)
+        val c = (for (n <- 1 to fp.getSize; r <- 0 to n) yield fp.get(n, r)).max
+        for (n <- 1 to fp.getSize; r <- 0 to n) fp.set(n, r, fp.get(n, r) / c)
+        (MatrixExponentiator.expQTtx(finiteInterval.m, finiteInterval.u, finiteInterval.v, finiteInterval.coalRate, finiteInterval.length, fp), c * cp)
     }
     def updatedCoalRate(i: Int, coalRate: Double): CachedF
   }
