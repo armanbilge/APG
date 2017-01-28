@@ -33,10 +33,12 @@ object BiallelicCoalescentLikelihood {
       val partials = sample.map(_.redCountPartial)
       val F = BiallelicSiteLikelihood.createCachedF(intervals, partials.toList)
       val like = new BiallelicSiteLikelihood(piRed, F)
-      val bound = if (partials.head.head > partials.head.last)
-        new Scaled(greenBound, partials.map(_.head).product)
+      val greenScaler = partials.map(_.head).product
+      val redScaler = partials.map(_.last).product
+      val bound = if (greenScaler > redScaler)
+        new Scaled(greenBound, greenScaler)
       else
-        new Scaled(redBound, partials.map(_.last).product)
+        new Scaled(redBound, redScaler)
       new DatumLikelihood[B, BiallelicSiteLikelihood, Scaled](lit, like, bound)
     }
     new BiallelicCoalescentLikelihood[B, M, Π, Θ](lights, greenBound, redBound, mu, piRed, coalIntervals, data)
