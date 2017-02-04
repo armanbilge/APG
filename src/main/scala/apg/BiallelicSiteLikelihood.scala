@@ -63,7 +63,7 @@ object BiallelicSiteLikelihood {
       val intervalp = if (interval.coalIndex == i) interval.updatedCoalRate(coalRate) else interval
       val previousFp = previousF.updatedCoalRate(i, coalRate)
       if ((interval ne interval) || (previousF ne previousFp))
-        new Nested(intervalp, partial: Int => Double, previousFp)
+        new Nested(intervalp, partial, previousFp)
       else
         this
     }
