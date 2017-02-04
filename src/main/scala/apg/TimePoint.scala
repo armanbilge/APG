@@ -12,6 +12,6 @@ case class TimePoint(t: Double, redCountPartial: IndexedSeq[Double]) extends Ord
 object TimePoint {
 
   def fromFile(t: Double, f: File): Array[TimePoint] =
-    Source.fromFile(f).getLines.map(l => TimePoint(t, l.split("\\s").map(_.toDouble).toIndexedSeq)).toArray
+    Source.fromFile(f).getLines.map(l => TimePoint(t, l.split("\\s").map(_.toDouble))).toArray
 
 }
