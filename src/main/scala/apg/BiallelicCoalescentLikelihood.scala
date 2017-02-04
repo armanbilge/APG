@@ -20,6 +20,8 @@ class BiallelicCoalescentLikelihood[B, M, Π, Θ](val lights: IndexedSeq[DatumLi
 
   lazy val evaluate: Double = lights.par.map(_.evaluate).sum
 
+  lazy val fractionLit: Double = lights.count(_.lit).toDouble / lights.length
+
 }
 
 object BiallelicCoalescentLikelihood {
