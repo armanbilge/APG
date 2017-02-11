@@ -31,7 +31,7 @@ object BiallelicCoalescentLikelihood {
     val intervals = createIntervals(mu, piRed, coalIntervals, data.head)
     val greenBound = new BiallelicSiteLikelihood(piRed, BiallelicSiteLikelihood.createCachedF(intervals, List.fill(data.head.size)(i => if (i == 0) 1.0 else 0.0)))
     val redBound = new BiallelicSiteLikelihood(piRed, BiallelicSiteLikelihood.createCachedF(intervals, data.head.map(_.redCountPartial.length - 1).map(k => (i: Int) => if (i == k) 1.0 else 0.0)))
-    val lights = (data, lit).zipped.map { (sample, lit) =>
+    val lights = (data.toArray, lit).zipped.map { (sample, lit) =>
       val partials = sample.map(_.redCountPartial)
       val F = BiallelicSiteLikelihood.createCachedF(intervals, partials.toList)
       val like = new BiallelicSiteLikelihood(piRed, F)
