@@ -7,7 +7,7 @@ import snap.likelihood.MatrixExponentiator
 
 import scala.collection.LinearSeq
 
-class BiallelicSiteLikelihood(val piRed: Double, val infiniteInterval: Broadcast[InfiniteBiallelicCoalescentInterval], val partials: LinearSeq[Int => Double], val F: CachedF) extends Probability[Double] {
+class BiallelicSiteLikelihood(val piRed: Double, val infiniteInterval: Broadcast[InfiniteBiallelicCoalescentInterval], val partials: LinearSeq[Int => Double], val F: CachedF) extends Probability[Double] with Serializable {
 
   require(0 < piRed && piRed < 1.0)
 
@@ -42,7 +42,7 @@ object BiallelicSiteLikelihood {
     F
   }
 
-  abstract class CachedF(fc: => (F, Double), val interval: FiniteBiallelicCoalescentInterval) {
+  abstract class CachedF(fc: => (F, Double), val interval: FiniteBiallelicCoalescentInterval) extends Serializable {
     private[this] lazy val (fp, cp) = fc
     lazy val (f, c): (F, Double) = {
       val c = (for (n <- 1 to fp.getSize; r <- 0 to n) yield fp.get(n, r)).max
@@ -61,7 +61,7 @@ object BiallelicSiteLikelihood {
       F
     } else previousF.f
     (F, previousF.c)
-  }, interval) {
+  }, interval) with Serializable {
 
     def updatedCoalRate(i: Int, coalRate: Double): Nested = {
       val intervalp = if (interval.coalIndex == i) interval.updatedCoalRate(coalRate) else interval
@@ -74,7 +74,7 @@ object BiallelicSiteLikelihood {
 
   }
 
-  class Base(interval: FiniteBiallelicCoalescentInterval, f: F) extends CachedF((f, 1), interval) {
+  class Base(interval: FiniteBiallelicCoalescentInterval, f: => F) extends CachedF((f, 1), interval) with Serializable {
 
     def this(interval: FiniteBiallelicCoalescentInterval, partial: Int => Double) = this(interval, {
       val F = new F(interval.m)

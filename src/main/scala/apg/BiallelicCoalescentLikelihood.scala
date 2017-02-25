@@ -74,7 +74,7 @@ object BiallelicCoalescentLikelihood {
 
   }
 
-  class Lower(val p: Double, val q: Double, val red: Boolean) extends Probability[Double] {
+  class Lower(val p: Double, val q: Double, val red: Boolean) extends Probability[Double] with Serializable {
     val evaluate: Double = p * q
   }
 
@@ -111,7 +111,7 @@ object BiallelicCoalescentLikelihood {
     }
 
     val intervals = recurse(coalIntervals, samples, coalIntervals.head.length)
-    (intervals.tail.reverse.asInstanceOf, intervals.head.asInstanceOf)
+    (intervals.tail.reverse.asInstanceOf[List[FiniteBiallelicCoalescentInterval]], intervals.head.asInstanceOf[InfiniteBiallelicCoalescentInterval])
 
   }
 
@@ -143,5 +143,8 @@ object BiallelicCoalescentLikelihood {
 
   implicit def lights[B, M, Π, Θ]: Lens[BiallelicCoalescentLikelihood[B, M, Π, Θ], RDD[DatumLikelihood[B, BiallelicSiteLikelihood, Lower]]] =
     Lens[BiallelicCoalescentLikelihood[B, M, Π, Θ], RDD[DatumLikelihood[B, BiallelicSiteLikelihood, Lower]]](_.lights)(lights => bcl => new BiallelicCoalescentLikelihood(lights, bcl.greenBound, bcl.redBound, bcl.mu, bcl.piRed, bcl.infiniteInterval, bcl.coalIntervals, bcl.data, bcl.greenData, bcl.redData)(bcl.sc))
+
+  implicit def lightsSeq[B, M, Π, Θ]: Lens[BiallelicCoalescentLikelihood[B, M, Π, Θ], IndexedSeq[DatumLikelihood[B, BiallelicSiteLikelihood, Lower]]] =
+    Lens[BiallelicCoalescentLikelihood[B, M, Π, Θ], IndexedSeq[DatumLikelihood[B, BiallelicSiteLikelihood, Lower]]](_.lights.toLocalIterator.toIndexedSeq)(lights => bcl => new BiallelicCoalescentLikelihood(bcl.sc.parallelize(lights), bcl.greenBound, bcl.redBound, bcl.mu, bcl.piRed, bcl.infiniteInterval, bcl.coalIntervals, bcl.data, bcl.greenData, bcl.redData)(bcl.sc))
 
 }
