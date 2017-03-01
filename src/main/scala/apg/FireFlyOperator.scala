@@ -29,7 +29,7 @@ class FireFlyOperator[B, P <: Probability[Double], L <: Probability[Double]](val
         } else
           dl
       }
-    }
+    }.persist()
   }
 
   override def hastingsRatio(x: RDD[DatumLikelihood[B, P, L]], y: RDD[DatumLikelihood[B, P, L]]): Double = x.zip(y).map(Function.tupled { (x: DatumLikelihood[B, P, L], y: DatumLikelihood[B, P, L]) =>

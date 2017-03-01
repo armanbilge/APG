@@ -19,7 +19,7 @@ class BiallelicCoalescentLikelihood[B, M, Π, Θ](val lights: RDD[DatumLikelihoo
                                                 val piRed: Double @@ Π,
                                                 val infiniteInterval: Broadcast[InfiniteBiallelicCoalescentInterval],
                                                 val coalIntervals: LinearSeq[CoalescentInterval[Θ]],
-                                                val data: IndexedSeq[LinearSeq[TimePoint]],
+                                                val datum: LinearSeq[TimePoint],
                                                 val greenData: LinearSeq[Int => Double],
                                                 val redData: LinearSeq[Int => Double]
                                                )(implicit val sc: SparkContext) extends Probability[Double] {
@@ -30,7 +30,7 @@ class BiallelicCoalescentLikelihood[B, M, Π, Θ](val lights: RDD[DatumLikelihoo
 
   def updated(mu: Double @@ M = mu, piRed: Double @@ Π = piRed): BiallelicCoalescentLikelihood[B, M, Π, Θ] = {
 
-    val (intervals, infiniteInterval) = BiallelicCoalescentLikelihood.createIntervals(mu, piRed, coalIntervals, data.head)
+    val (intervals, infiniteInterval) = BiallelicCoalescentLikelihood.createIntervals(mu, piRed, coalIntervals, datum)
     val broadcastedInfiniteInterval = sc.broadcast(infiniteInterval)
     val greenBound = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval, intervals, greenData)
     val redBound = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval, intervals, redData)
@@ -42,8 +42,8 @@ class BiallelicCoalescentLikelihood[B, M, Π, Θ](val lights: RDD[DatumLikelihoo
       else
         new Lower(greenP, light.lower.q, false)
       new DatumLikelihood(light.lit, BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval, intervals, light.probability.partials), bound)
-    }
-    new BiallelicCoalescentLikelihood(lights, greenBound, redBound, mu, piRed, broadcastedInfiniteInterval, coalIntervals, data, greenData, redData)
+    }.persist()
+    new BiallelicCoalescentLikelihood(lights, greenBound, redBound, mu, piRed, broadcastedInfiniteInterval, coalIntervals, datum, greenData, redData)
 
   }
 
@@ -51,15 +51,16 @@ class BiallelicCoalescentLikelihood[B, M, Π, Θ](val lights: RDD[DatumLikelihoo
 
 object BiallelicCoalescentLikelihood {
 
-  def apply[B, M, Π, Θ](lit: IndexedSeq[Boolean @@ B], mu: Double @@ M, piRed: Double @@ Π, coalIntervals: LinearSeq[CoalescentInterval[Θ]], data: IndexedSeq[LinearSeq[TimePoint]])(implicit sc: SparkContext): BiallelicCoalescentLikelihood[B, M, Π, Θ] = {
+  def apply[B, M, Π, Θ](lit: IndexedSeq[Boolean @@ B], mu: Double @@ M, piRed: Double @@ Π, coalIntervals: LinearSeq[CoalescentInterval[Θ]], data: RDD[LinearSeq[TimePoint]], init: Boolean = false)(implicit sc: SparkContext): BiallelicCoalescentLikelihood[B, M, Π, Θ] = {
 
-    val greenData = List.fill(data.head.size)((i: Int) => if (i == 0) 1.0 else 0.0)
-    val redData = data.head.map(_.redCountPartial.length - 1).map(k => (i: Int) => if (i == k) 1.0 else 0.0)
-    val (intervals, infiniteInterval) = createIntervals(mu, piRed, coalIntervals, data.head)
+    val first = data.first()
+    val greenData = List.fill(first.size)((i: Int) => if (i == 0) 1.0 else 0.0)
+    val redData = first.map(_.redCountPartial.length - 1).map(k => (i: Int) => if (i == k) 1.0 else 0.0)
+    val (intervals, infiniteInterval) = createIntervals(mu, piRed, coalIntervals, data.first)
     val broadcastedInfiniteInterval = sc.broadcast(infiniteInterval)
     val greenBound = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval, intervals, greenData)
     val redBound = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval, intervals, redData)
-    val lights = (data.toArray, lit).zipped.map { (sample, lit) =>
+    val lights = data.zip(sc.parallelize(lit)).map( Function.tupled { (sample, lit) =>
       val partials = sample.map(_.redCountPartial)
       val like = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval, intervals, partials.toList)
       val greenScaler = partials.map(_.head).product
@@ -68,9 +69,13 @@ object BiallelicCoalescentLikelihood {
         new Lower(greenBound.evaluate, greenScaler, false)
       else
         new Lower(redBound.evaluate, redScaler, true)
-      new DatumLikelihood[B, BiallelicSiteLikelihood, Lower](lit, like, bound)
-    }
-    new BiallelicCoalescentLikelihood[B, M, Π, Θ](sc.parallelize(lights), greenBound, redBound, mu, piRed, broadcastedInfiniteInterval, coalIntervals, data, greenData, redData)
+      val dl = new DatumLikelihood[B, BiallelicSiteLikelihood, Lower](lit, like, bound)
+      if (init && dl.evaluate.isNegInfinity)
+        dl.flipped
+      else
+        dl
+    }).persist()
+    new BiallelicCoalescentLikelihood[B, M, Π, Θ](lights, greenBound, redBound, mu, piRed, broadcastedInfiniteInterval, coalIntervals, first, greenData, redData)
 
   }
 
@@ -135,16 +140,13 @@ object BiallelicCoalescentLikelihood {
           else
             new Lower(greenP, light.lower.q, false)
           new DatumLikelihood(light.lit, light.probability.updatedCoalRate(i, coalRate, broadcastedInfiniteInterval), bound)
-        }
-        new BiallelicCoalescentLikelihood[B, M, Π, Θ](lights, greenBound, redBound, bcl.mu, bcl.piRed, broadcastedInfiniteInterval, coalIntervals, bcl.data, bcl.greenData, bcl.redData)(bcl.sc)
+        }.persist()
+        new BiallelicCoalescentLikelihood[B, M, Π, Θ](lights, greenBound, redBound, bcl.mu, bcl.piRed, broadcastedInfiniteInterval, coalIntervals, bcl.datum, bcl.greenData, bcl.redData)(bcl.sc)
       })
     }
   }
 
   implicit def lights[B, M, Π, Θ]: Lens[BiallelicCoalescentLikelihood[B, M, Π, Θ], RDD[DatumLikelihood[B, BiallelicSiteLikelihood, Lower]]] =
-    Lens[BiallelicCoalescentLikelihood[B, M, Π, Θ], RDD[DatumLikelihood[B, BiallelicSiteLikelihood, Lower]]](_.lights)(lights => bcl => new BiallelicCoalescentLikelihood(lights, bcl.greenBound, bcl.redBound, bcl.mu, bcl.piRed, bcl.infiniteInterval, bcl.coalIntervals, bcl.data, bcl.greenData, bcl.redData)(bcl.sc))
-
-  implicit def lightsSeq[B, M, Π, Θ]: Lens[BiallelicCoalescentLikelihood[B, M, Π, Θ], IndexedSeq[DatumLikelihood[B, BiallelicSiteLikelihood, Lower]]] =
-    Lens[BiallelicCoalescentLikelihood[B, M, Π, Θ], IndexedSeq[DatumLikelihood[B, BiallelicSiteLikelihood, Lower]]](_.lights.toLocalIterator.toIndexedSeq)(lights => bcl => new BiallelicCoalescentLikelihood(bcl.sc.parallelize(lights), bcl.greenBound, bcl.redBound, bcl.mu, bcl.piRed, bcl.infiniteInterval, bcl.coalIntervals, bcl.data, bcl.greenData, bcl.redData)(bcl.sc))
+    Lens[BiallelicCoalescentLikelihood[B, M, Π, Θ], RDD[DatumLikelihood[B, BiallelicSiteLikelihood, Lower]]](_.lights)(lights => bcl => new BiallelicCoalescentLikelihood(lights, bcl.greenBound, bcl.redBound, bcl.mu, bcl.piRed, bcl.infiniteInterval, bcl.coalIntervals, bcl.datum, bcl.greenData, bcl.redData)(bcl.sc))
 
 }
