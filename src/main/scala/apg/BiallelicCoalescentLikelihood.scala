@@ -60,15 +60,17 @@ object BiallelicCoalescentLikelihood {
     val broadcastedInfiniteInterval = sc.broadcast(infiniteInterval)
     val greenBound = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval, intervals, greenData)
     val redBound = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval, intervals, redData)
+    val greenP = greenBound.evaluate
+    val redP = redBound.evaluate
     val lights = data.zip(sc.parallelize(lit)).map( Function.tupled { (sample, lit) =>
       val partials = sample.map(_.redCountPartial)
       val like = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval, intervals, partials.toList)
       val greenScaler = partials.map(_.head).product
       val redScaler = partials.map(_.last).product
       val bound = if (greenScaler > redScaler)
-        new Lower(greenBound.evaluate, greenScaler, false)
+        new Lower(greenP, greenScaler, false)
       else
-        new Lower(redBound.evaluate, redScaler, true)
+        new Lower(redP, redScaler, true)
       val dl = new DatumLikelihood[B, BiallelicSiteLikelihood, Lower](lit, like, bound)
       if (init && dl.evaluate.isNegInfinity)
         dl.flipped
@@ -83,7 +85,7 @@ object BiallelicCoalescentLikelihood {
     val evaluate: Double = p * q
   }
 
-  def createIntervals[Θ](mu: Double, piRed: Double, coalIntervals: LinearSeq[CoalescentInterval[Θ]], samples: LinearSeq[TimePoint]): (List[FiniteBiallelicCoalescentInterval], InfiniteBiallelicCoalescentInterval) = {
+  def createIntervals[Θ](mu: Double, piRed: Double, coalIntervals: LinearSeq[CoalescentInterval[Θ]], samples: LinearSeq[TimePoint]): (List[BiallelicCoalescentInterval], InfiniteBiallelicCoalescentInterval) = {
 
     val piGreen = 1 - piRed
     val beta = 1 / (1 - piRed * piRed - piGreen * piGreen)
@@ -116,7 +118,7 @@ object BiallelicCoalescentLikelihood {
     }
 
     val intervals = recurse(coalIntervals, samples, coalIntervals.head.length)
-    (intervals.tail.reverse.asInstanceOf[List[FiniteBiallelicCoalescentInterval]], intervals.head.asInstanceOf[InfiniteBiallelicCoalescentInterval])
+    (intervals.reverse, intervals.head.asInstanceOf[InfiniteBiallelicCoalescentInterval])
 
   }
 
