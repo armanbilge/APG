@@ -25,12 +25,13 @@
  */
 package snap;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 /** The FMatrix contains a site distribution for a node.
  *  This is the likelihood multiplied by the lineage probabilities Pr(Ry | n,r ) x Pr(n)  in the paper.
  *  **/
-public class FMatrix {
+public class FMatrix implements Serializable {
     int m_n;
     private double [] F;
     public int getSize() {
