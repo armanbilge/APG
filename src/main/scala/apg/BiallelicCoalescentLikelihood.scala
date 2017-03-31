@@ -65,7 +65,7 @@ object BiallelicCoalescentLikelihood {
     val redBound = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval, intervals, redData)
     val greenP = greenBound.evaluate
     val redP = redBound.evaluate
-    val lights = data.zip(sc.parallelize(lit)).map( Function.tupled { (sample, lit) =>
+    val lights = data.zipWithIndex.map( Function.tupled { (sample, i) =>
       val partials = sample.map(_.redCountPartial)
       val like = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval, intervals, partials.toList)
       val greenScaler = partials.map(_.head).product
@@ -74,7 +74,7 @@ object BiallelicCoalescentLikelihood {
         new Lower(greenP, greenScaler, false)
       else
         new Lower(redP, redScaler, true)
-      val dl = new DatumLikelihood[B, BiallelicSiteLikelihood, Lower](lit, like, bound)
+      val dl = new DatumLikelihood[B, BiallelicSiteLikelihood, Lower](lit(i.toInt), like, bound)
       if (init && dl.evaluate.isNegInfinity)
         dl.flipped
       else
