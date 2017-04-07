@@ -25,7 +25,7 @@ class BiallelicCoalescentLikelihood[B, M, Π, Θ](val lights: RDD[DatumLikelihoo
                                                 val age: Long
                                                )(implicit val sc: SparkContext) extends Probability[Double] {
 
-  if (age % 50 == 0) lights.checkpoint()
+  if (age % 50 == 0) lights.localCheckpoint()
 
   lazy val evaluate: Double = lights.map(_.evaluate).sum
 
