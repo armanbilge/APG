@@ -97,27 +97,32 @@ object BiallelicCoalescentLikelihood {
     val v = beta * mu * piGreen
 
     @tailrec
-    def recurse(intervals: LinearSeq[CoalescentInterval[Θ]], samples: LinearSeq[TimePoint], nextCoal: Double, t: Double = 0, m: Int = 0, coalIndex: Int = 0, acc: List[BiallelicCoalescentInterval] = Nil): List[BiallelicCoalescentInterval] = {
-      samples match {
-        case sample :: samplesTail =>
-          val interval :: intervalsTail = intervals
-          math.signum(nextCoal compare sample.t) match {
-            case -1 => recurse(intervalsTail, samples, nextCoal + intervalsTail.head.length, nextCoal, m, coalIndex + 1, BiallelicCoalescentInterval(nextCoal - t, m, 0, u, v, 1 / interval.Ne, coalIndex) :: acc)
-            case 1 =>
-              val k = sample.k
-              val mp = m + k
-              val nextEvent = nextCoal min samplesTail.headOption.map(_.t).getOrElse(Double.PositiveInfinity)
-              recurse(intervals, samplesTail, nextCoal, nextEvent, mp, coalIndex, BiallelicCoalescentInterval(nextEvent - t, mp, k, u, v, 1 / interval.Ne, coalIndex) :: acc)
-            case 0 =>
-              val k = sample.k
-              val mp = m + k
-              recurse(intervalsTail, samplesTail, nextCoal + intervalsTail.head.length, nextCoal, mp, coalIndex + 1, BiallelicCoalescentInterval(nextCoal - t, mp, k, u, v, 1 / interval.Ne, coalIndex) :: acc)
-          }
-        case Nil => intervals match {
-          case interval :: Nil => acc
-          case interval :: intervalsTail => recurse(intervalsTail, samples, nextCoal + intervalsTail.head.length, nextCoal, m, coalIndex + 1, BiallelicCoalescentInterval(nextCoal - t, m, 0, u, v, 1 / interval.Ne, coalIndex) :: acc)
-        }
-      }
+    def recurse(intervals: LinearSeq[CoalescentInterval[Θ]], samples: LinearSeq[TimePoint], nextCoal: Double, t: Double = 0, m: Int = 0, coalIndex: Int = 0, acc: List[BiallelicCoalescentInterval] = Nil): List[BiallelicCoalescentInterval] = if (t.isPosInfinity)
+      acc
+    else {
+
+      val nextSample = samples.headOption.map(_.t).getOrElse(Double.PositiveInfinity)
+      val interval :: intervalsTail = intervals
+
+      val (intervalP, intervalsP, nextCoalP, coalIndexP) = if (t == nextCoal) {
+        val nextInterval = intervalsTail.head
+        val nextNextCoal = nextCoal + nextInterval.length
+        val coalIndexP = coalIndex + 1
+        (nextInterval, intervalsTail, nextNextCoal, coalIndexP)
+      } else (interval, intervals, nextCoal, coalIndex)
+
+      val (nextSampleP, samplesP, k) = if (t == nextSample) {
+        val sample :: samplesTail = samples
+        val nextNextSample = samplesTail.headOption.map(_.t).getOrElse(Double.PositiveInfinity)
+        val k = sample.k
+        (nextNextSample, samplesTail, k)
+      } else (nextSample, samples, 0)
+
+      val mp = m + k
+      val nextEvent = nextCoalP min nextSampleP
+
+      recurse(intervalsP, samplesP, nextCoalP, nextEvent, mp, coalIndexP, BiallelicCoalescentInterval(nextEvent - t, mp, k, u, v, 1 / intervalP.Ne, coalIndexP) :: acc)
+
     }
 
     val intervals = recurse(coalIntervals, samples, coalIntervals.head.length)
