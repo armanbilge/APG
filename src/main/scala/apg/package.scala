@@ -1,4 +1,3 @@
-import apg.BiallelicCoalescentLikelihood.IBCI
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
@@ -13,13 +12,17 @@ package object apg {
   type F = FMatrix
   type Q = QMatrix
 
-  implicit object ArrayIsDistributed extends Distributed[ParArray] {
+  implicit object ArrayIsDistributed extends Distributed[ParArray, Some] {
 
     override def head[A](a: ParArray[A]): A = a.head
 
+    override def range(start: Long, end: Long): ParArray[Long] = (start until end).toParArray
+
     override def map[A, B : ClassTag](a: ParArray[A])(f: (A) => B): ParArray[B] = a.map(f)
 
-    override def synchronizedMap[A, B : ClassTag, T](a: ParArray[A])(f: (Int) => T)(g: T => A => B): ParArray[B] = {
+    override def filter[A](a: ParArray[A])(f: (A) => Boolean): ParArray[A] = a.filter(f)
+
+    override def partitionAwareMap[A, B : ClassTag, T](a: ParArray[A])(f: (Int) => T)(g: T => A => B): ParArray[B] = {
       val t = f(0)
       a.map(g(t))
     }
@@ -34,17 +37,27 @@ package object apg {
 
     override def sum(a: ParArray[Double]): Double = a.sum
 
-    override def checkpoint[A](c: ParArray[A]): Unit = ()
+    override def persist[A](a: ParArray[A]): ParArray[A] = a
+
+    override def checkpoint[A](a: ParArray[A]): Unit = ()
+
+    override def broadcast[A : ClassTag](a: A): Some[A] = Some(a)
+
+    override def retrieve[A](s: Some[A]): A = s.x
 
   }
 
-  implicit object RDDIsDistributed extends Distributed[RDD] {
+  implicit def rddIsDistributed(implicit sc: SparkContext): Distributed[RDD, Broadcast] = new Distributed[RDD, Broadcast] {
 
     override def head[A](rdd: RDD[A]): A = rdd.first()
 
-    override def map[A, B : ClassTag](rdd: RDD[A])(f: (A) => B): RDD[B] = rdd.map(f).persist()
+    override def range(start: Long, end: Long): RDD[Long] = sc.range(start, end)
 
-    def synchronizedMap[A, B : ClassTag, T](rdd: RDD[A])(f: Int => T)(g: T => A => B): RDD[B] =
+    override def map[A, B : ClassTag](rdd: RDD[A])(f: (A) => B): RDD[B] = rdd.map(f)
+
+    override def filter[A](rdd: RDD[A])(f: (A) => Boolean): RDD[A] = rdd.filter(f)
+
+    def partitionAwareMap[A, B : ClassTag, T](rdd: RDD[A])(f: Int => T)(g: T => A => B): RDD[B] =
       rdd.mapPartitionsWithIndex { (i, it) =>
         val t = f(i)
         it.map(g(t))
@@ -60,15 +73,13 @@ package object apg {
 
     override def sum(rdd: RDD[Double]): Double = rdd.sum
 
-    override def checkpoint[A](c: RDD[A]): Unit = c.localCheckpoint()
+    override def persist[A](rdd: RDD[A]): RDD[A] = rdd.persist()
 
-  }
+    override def checkpoint[A](rdd: RDD[A]): Unit = rdd.localCheckpoint()
 
-  implicit def broadcastIsIBCI(implicit sc: SparkContext): IBCI[Broadcast[InfiniteBiallelicCoalescentInterval]] = new IBCI[Broadcast[InfiniteBiallelicCoalescentInterval]] {
+    override def broadcast[A : ClassTag](a: A): Broadcast[A] = sc.broadcast(a)
 
-    override def apply(interval: InfiniteBiallelicCoalescentInterval): Broadcast[InfiniteBiallelicCoalescentInterval] = sc.broadcast(interval)
-
-    override def unapply(t: Broadcast[InfiniteBiallelicCoalescentInterval]): InfiniteBiallelicCoalescentInterval = t.value
+    override def retrieve[A](b: Broadcast[A]): A = b.value
 
   }
 

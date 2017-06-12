@@ -1,16 +1,16 @@
 package apg
 
-import apg.Distributed._
 import mcmc.{Operator, Probability}
 import spire.random.Generator
 import spire.random.rng.MersenneTwister64
 
 import scala.language.higherKinds
 
-class FireFlyOperator[D[X] : Distributed, B, P <: Probability[Double], L <: Probability[Double]](val `q_d->b`: Double, val rng: Int => Generator = Stream.continually(MersenneTwister64.fromTime())) extends Operator[D[DatumLikelihood[B, P, L]], Double] {
+class FireFlyOperator[D[X], Z[X], B, P <: Probability[Double], L <: Probability[Double]](val `q_d->b`: Double, val rng: Int => Generator = Stream.continually(MersenneTwister64.fromTime()))(implicit distributed: Distributed[D, Z]) extends Operator[D[DatumLikelihood[B, P, L]], Double] {
 
   override def apply(d: D[DatumLikelihood[B, P, L]]): D[DatumLikelihood[B, P, L]] = {
     val `q_d->b` = this.`q_d->b`
+    import distributed._
     d.synchronizedMap(rng) { rng =>
       { dl =>
         if (dl.lit) {
@@ -30,10 +30,12 @@ class FireFlyOperator[D[X] : Distributed, B, P <: Probability[Double], L <: Prob
         } else
           dl
       }
-    }
+    }.persist()
   }
 
-  override def hastingsRatio(x: D[DatumLikelihood[B, P, L]], y: D[DatumLikelihood[B, P, L]]): Double =
+  override def hastingsRatio(x: D[DatumLikelihood[B, P, L]], y: D[DatumLikelihood[B, P, L]]): Double = {
+    import distributed._
     x.zipMap(y)(_.evaluate - _.evaluate).sum
+  }
 
 }
