@@ -1,17 +1,18 @@
 package apg
 
+import apg.Distributed._
 import mcmc.{Operator, Probability}
-import org.apache.spark.rdd.RDD
 import spire.random.Generator
 import spire.random.rng.MersenneTwister64
 
-class FireFlyOperator[B, P <: Probability[Double], L <: Probability[Double]](val `q_d->b`: Double) extends Operator[RDD[DatumLikelihood[B, P, L]], Double] {
+import scala.language.higherKinds
 
-  override def apply(c: RDD[DatumLikelihood[B, P, L]]): RDD[DatumLikelihood[B, P, L]] = {
+class FireFlyOperator[D[X] : Distributed, B, P <: Probability[Double], L <: Probability[Double]](val `q_d->b`: Double, val rng: Int => Generator = Stream.continually(MersenneTwister64.fromTime())) extends Operator[D[DatumLikelihood[B, P, L]], Double] {
+
+  override def apply(d: D[DatumLikelihood[B, P, L]]): D[DatumLikelihood[B, P, L]] = {
     val `q_d->b` = this.`q_d->b`
-    c.mapPartitionsWithIndex { (i, dls) =>
-      val rng = MersenneTwister64.fromTime()
-      dls.map { dl =>
+    d.synchronizedMap(rng) { rng =>
+      { dl =>
         if (dl.lit) {
           val u = rng.nextDouble()
           val Ltilde = (dl.probability.evaluate - dl.lower.evaluate) / dl.lower.evaluate
@@ -29,11 +30,10 @@ class FireFlyOperator[B, P <: Probability[Double], L <: Probability[Double]](val
         } else
           dl
       }
-    }.persist()
+    }
   }
 
-  override def hastingsRatio(x: RDD[DatumLikelihood[B, P, L]], y: RDD[DatumLikelihood[B, P, L]]): Double = x.zip(y).map(Function.tupled { (x: DatumLikelihood[B, P, L], y: DatumLikelihood[B, P, L]) =>
-    x.evaluate - y.evaluate
-  }).sum
+  override def hastingsRatio(x: D[DatumLikelihood[B, P, L]], y: D[DatumLikelihood[B, P, L]]): Double =
+    x.zipMap(y)(_.evaluate - _.evaluate).sum
 
 }
