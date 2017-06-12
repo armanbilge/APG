@@ -2,12 +2,11 @@ package apg
 
 import apg.BiallelicSiteLikelihood.CachedF
 import mcmc.Probability
-import org.apache.spark.broadcast.Broadcast
 import snap.likelihood.MatrixExponentiator
 
 import scala.collection.LinearSeq
 
-class BiallelicSiteLikelihood(val piRed: Double, val infiniteInterval: Broadcast[InfiniteBiallelicCoalescentInterval], val partials: LinearSeq[Int => Double], val F: CachedF) extends Probability[Double] with Serializable {
+class BiallelicSiteLikelihood(val piRed: Double, infiniteInterval: => InfiniteBiallelicCoalescentInterval, val partials: LinearSeq[Int => Double], val F: CachedF) extends Probability[Double] with Serializable {
 
   require(0 < piRed && piRed < 1.0)
 
@@ -15,16 +14,16 @@ class BiallelicSiteLikelihood(val piRed: Double, val infiniteInterval: Broadcast
     import spire.std.array._
     import spire.std.double._
     import spire.syntax.innerProductSpace._
-    F.c * (F.f.asVectorCopyBase1() dot infiniteInterval.value.pi)
+    F.c * (F.f.asVectorCopyBase1() dot infiniteInterval.pi)
   }
 
-  def updatedCoalRate(i: Int, coalRate: Double, infiniteInterval: Broadcast[InfiniteBiallelicCoalescentInterval]): BiallelicSiteLikelihood = new BiallelicSiteLikelihood(piRed, infiniteInterval, partials, F.updatedCoalRate(i, coalRate))
+  def updatedCoalRate(i: Int, coalRate: Double, infiniteInterval: => InfiniteBiallelicCoalescentInterval): BiallelicSiteLikelihood = new BiallelicSiteLikelihood(piRed, infiniteInterval, partials, F.updatedCoalRate(i, coalRate))
 
 }
 
 object BiallelicSiteLikelihood {
 
-  def apply(piRed: Double, infiniteInterval: Broadcast[InfiniteBiallelicCoalescentInterval], intervals: LinearSeq[BiallelicCoalescentInterval], partials: LinearSeq[Int => Double]): BiallelicSiteLikelihood =
+  def apply(piRed: Double, infiniteInterval: => InfiniteBiallelicCoalescentInterval, intervals: LinearSeq[BiallelicCoalescentInterval], partials: LinearSeq[Int => Double]): BiallelicSiteLikelihood =
     new BiallelicSiteLikelihood(piRed, infiniteInterval, partials, createCachedF(intervals, partials))
 
   def createCachedF(intervals: LinearSeq[BiallelicCoalescentInterval], partials: LinearSeq[Int => Double]): CachedF = {

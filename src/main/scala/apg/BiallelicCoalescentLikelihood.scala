@@ -35,8 +35,8 @@ class BiallelicCoalescentLikelihood[B, M, Π, Θ](val lights: RDD[DatumLikelihoo
 
     val (intervals, infiniteInterval) = BiallelicCoalescentLikelihood.createIntervals(mu, piRed, coalIntervals, datum)
     val broadcastedInfiniteInterval = sc.broadcast(infiniteInterval)
-    val greenBound = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval, intervals, greenData)
-    val redBound = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval, intervals, redData)
+    val greenBound = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval.value, intervals, greenData)
+    val redBound = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval.value, intervals, redData)
     val greenP = greenBound.evaluate
     val redP = redBound.evaluate
     val lights = this.lights.map { light =>
@@ -44,7 +44,7 @@ class BiallelicCoalescentLikelihood[B, M, Π, Θ](val lights: RDD[DatumLikelihoo
         new Lower(redP, light.lower.q, true)
       else
         new Lower(greenP, light.lower.q, false)
-      new DatumLikelihood(light.lit, BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval, intervals, light.probability.partials), bound)
+      new DatumLikelihood(light.lit, BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval.value, intervals, light.probability.partials), bound)
     }.persist()
     new BiallelicCoalescentLikelihood(lights, greenBound, redBound, mu, piRed, broadcastedInfiniteInterval, coalIntervals, datum, greenData, redData, age + 1)
 
@@ -61,13 +61,13 @@ object BiallelicCoalescentLikelihood {
     val redData = first.map(_.redCountPartial.length - 1).map(k => (i: Int) => if (i == k) 1.0 else 0.0)
     val (intervals, infiniteInterval) = createIntervals(mu, piRed, coalIntervals, data.first)
     val broadcastedInfiniteInterval = sc.broadcast(infiniteInterval)
-    val greenBound = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval, intervals, greenData)
-    val redBound = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval, intervals, redData)
+    val greenBound = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval.value, intervals, greenData)
+    val redBound = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval.value, intervals, redData)
     val greenP = greenBound.evaluate
     val redP = redBound.evaluate
     val lights = data.zipWithIndex.map( Function.tupled { (sample, i) =>
       val partials = sample.map(_.redCountPartial)
-      val like = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval, intervals, partials.toList)
+      val like = BiallelicSiteLikelihood(piRed, broadcastedInfiniteInterval.value, intervals, partials.toList)
       val greenScaler = partials.map(_.head).product
       val redScaler = partials.map(_.last).product
       val bound = if (greenScaler > redScaler)
@@ -140,8 +140,8 @@ object BiallelicCoalescentLikelihood {
         val coalRate = 1 / Ne
         val coalIntervals = bcl.coalIntervals.updated(i, bcl.coalIntervals(i).copy(Ne = Ne))
         val broadcastedInfiniteInterval = if (bcl.infiniteInterval.value.coalIndex == i) bcl.sc.broadcast(bcl.infiniteInterval.value.updatedCoalRate(coalRate)) else bcl.infiniteInterval
-        val greenBound = bcl.greenBound.updatedCoalRate(i, coalRate, broadcastedInfiniteInterval)
-        val redBound = bcl.redBound.updatedCoalRate(i, coalRate, broadcastedInfiniteInterval)
+        val greenBound = bcl.greenBound.updatedCoalRate(i, coalRate, broadcastedInfiniteInterval.value)
+        val redBound = bcl.redBound.updatedCoalRate(i, coalRate, broadcastedInfiniteInterval.value)
         val greenP = greenBound.evaluate
         val redP = redBound.evaluate
         val lights = bcl.lights.map { light =>
@@ -149,7 +149,7 @@ object BiallelicCoalescentLikelihood {
             new Lower(redP, light.lower.q, true)
           else
             new Lower(greenP, light.lower.q, false)
-          new DatumLikelihood(light.lit, light.probability.updatedCoalRate(i, coalRate, broadcastedInfiniteInterval), bound)
+          new DatumLikelihood(light.lit, light.probability.updatedCoalRate(i, coalRate, broadcastedInfiniteInterval.value), bound)
         }.persist()
         new BiallelicCoalescentLikelihood[B, M, Π, Θ](lights, greenBound, redBound, bcl.mu, bcl.piRed, broadcastedInfiniteInterval, coalIntervals, bcl.datum, bcl.greenData, bcl.redData, bcl.age + 1)(bcl.sc)
       })
