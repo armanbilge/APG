@@ -25,7 +25,7 @@ package object apg {
     }
 
     override def zipMap[A, B : ClassTag, T : ClassTag](a1: ParArray[A], a2: ParArray[B])(f: (A, B) => T): ParArray[T] =
-      (a1.seq, a2.seq).zipped.map(f).par
+      (a1.seq, a2.seq).zipped.par.map(f.tupled).to
 
     override def zipWithIndexMap[A, B : ClassTag](a: ParArray[A])(f: (A, Long) => B): ParArray[B] =
       a.zipWithIndex.map(x => f(x._1, x._2))
