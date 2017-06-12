@@ -1,3 +1,7 @@
 language: scala
+before_install:
+  - git clone https://github.com/armanbilge/mcmc.git
+  - cd mcmc
+  - sbt "++ 2.11.8 compile"
 scala:
 - 2.11.8
