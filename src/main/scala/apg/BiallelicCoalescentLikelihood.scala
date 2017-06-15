@@ -39,12 +39,13 @@ class BiallelicCoalescentLikelihood[D[X], I[X], B, M, Π, Θ](val lights: D[Datu
     val redBound = BiallelicSiteLikelihood(piRed, distributed.retrieve(broadcastedInfiniteInterval), intervals, redData)
     val greenP = greenBound.evaluate
     val redP = redBound.evaluate
+    val myDistributed = distributed
     val lights = this.lights.map { light =>
       val bound = if (light.lower.red)
         new Lower(redP, light.lower.q, true)
       else
         new Lower(greenP, light.lower.q, false)
-      new DatumLikelihood(light.lit, BiallelicSiteLikelihood(piRed, distributed.retrieve(broadcastedInfiniteInterval), intervals, light.probability.partials), bound)
+      new DatumLikelihood(light.lit, BiallelicSiteLikelihood(piRed, myDistributed.retrieve(broadcastedInfiniteInterval), intervals, light.probability.partials), bound)
     }.persist()
     new BiallelicCoalescentLikelihood(lights, greenBound, redBound, mu, piRed, broadcastedInfiniteInterval, coalIntervals, datum, greenData, redData, age + 1)
 

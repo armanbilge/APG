@@ -1,6 +1,6 @@
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.{DoubleRDDFunctions, RDD}
 import snap.FMatrix
 import snap.matrix.QMatrix
 
@@ -47,7 +47,9 @@ package object apg {
 
   }
 
-  implicit def rddIsDistributed(implicit sc: SparkContext): Distributed[RDD, Broadcast] = new Distributed[RDD, Broadcast] {
+  implicit def rddIsDistributed(implicit sc: SparkContext): Distributed[RDD, Broadcast] = new RDDISDistributed()
+
+  class RDDISDistributed(implicit @transient sc: SparkContext) extends Distributed[RDD, Broadcast] with Serializable {
 
     override def head[A](rdd: RDD[A]): A = rdd.first()
 
@@ -71,7 +73,7 @@ package object apg {
 
     def size[A](rdd: RDD[A]): Long = rdd.count
 
-    override def sum(rdd: RDD[Double]): Double = rdd.sum
+    override def sum(rdd: RDD[Double]): Double = new DoubleRDDFunctions(rdd).sum
 
     override def persist[A](rdd: RDD[A]): RDD[A] = rdd.persist()
 
