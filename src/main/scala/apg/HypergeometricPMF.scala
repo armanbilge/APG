@@ -7,11 +7,11 @@ object HypergeometricPMF extends ((Int, Int, Int) => (Int => Double)) {
 
   def apply(N: Int, K: Int, n: Int): (Int => Double) = { k =>
     if (N >= cache.length) {
-      cache = Array.tabulate(N + 1) { i =>
-        if (i < cache.length)
-          cache(i)
+      cache = Array.tabulate(N + 1) { N =>
+        if (N < cache.length)
+          cache(N)
         else
-          Array.tabulate(i+1, i+1) { (K, n) =>
+          Array.tabulate(N+1, N+1) { (K, n) =>
             Array.tabulate(n+1)(pmf(N, K, n, _))
           }
       }
