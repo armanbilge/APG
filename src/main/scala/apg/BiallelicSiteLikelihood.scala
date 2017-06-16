@@ -10,12 +10,7 @@ class BiallelicSiteLikelihood(val piRed: Double, infiniteInterval: => InfiniteBi
 
   require(0 < piRed && piRed < 1.0)
 
-  lazy val evaluate: Double = {
-    import spire.std.array._
-    import spire.std.double._
-    import spire.syntax.innerProductSpace._
-    F.c * (F.f.asVectorCopyBase1() dot infiniteInterval.pi)
-  }
+  lazy val evaluate: Double = F.c
 
   def updatedCoalRate(i: Int, coalRate: Double, infiniteInterval: => InfiniteBiallelicCoalescentInterval): BiallelicSiteLikelihood = new BiallelicSiteLikelihood(piRed, infiniteInterval, partials, F.updatedCoalRate(i, coalRate))
 
@@ -45,7 +40,11 @@ object BiallelicSiteLikelihood {
         val f = new F(fp.getSize)
         for (n <- 1 to fp.getSize; r <- 0 to n) f.set(n, r, fp.get(n, r) / c)
         (MatrixExponentiator.expQTtx(interval.m, interval.u, interval.v, interval.coalRate, interval.length, f), c * cp)
-      case interval: InfiniteBiallelicCoalescentInterval => (fp, cp)
+      case interval: InfiniteBiallelicCoalescentInterval =>
+        import spire.std.array._
+        import spire.std.double._
+        import spire.syntax.innerProductSpace._
+        (null, cp * (fp.asVectorCopyBase1() dot interval.pi))
     }
     def updatedCoalRate(i: Int, coalRate: Double): CachedF
   }
