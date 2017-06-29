@@ -1,7 +1,12 @@
 language: scala
 before_install:
-  - git clone https://github.com/armanbilge/mcmc.git
-  - cd mcmc
-  - sbt "++ 2.11.8 compile"
+- git clone https://github.com/armanbilge/mcmc.git
+- cd mcmc
+- sbt "+publishLocal"
+- cd ..
 scala:
-- 2.11.8
+- 2.12.2
+jdk:
+- oraclejdk8
+script:
+- sbt "+test"
