@@ -1,6 +1,3 @@
-import org.apache.spark.SparkContext
-import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.rdd.{DoubleRDDFunctions, RDD}
 import snap.FMatrix
 import snap.matrix.QMatrix
 
@@ -44,44 +41,6 @@ package object apg {
     override def broadcast[A : ClassTag](a: A): Some[A] = Some(a)
 
     override def retrieve[A](s: Some[A]): A = s.x
-
-  }
-
-  implicit def rddIsDistributed(implicit sc: SparkContext): Distributed[RDD, Broadcast] = new RDDISDistributed()
-
-  class RDDISDistributed(implicit @transient sc: SparkContext) extends Distributed[RDD, Broadcast] with Serializable {
-
-    override def head[A](rdd: RDD[A]): A = rdd.first()
-
-    override def range(start: Long, end: Long): RDD[Long] = sc.range(start, end)
-
-    override def map[A, B : ClassTag](rdd: RDD[A])(f: (A) => B): RDD[B] = rdd.map(f)
-
-    override def filter[A](rdd: RDD[A])(f: (A) => Boolean): RDD[A] = rdd.filter(f)
-
-    def partitionAwareMap[A, B : ClassTag, T](rdd: RDD[A])(f: Int => T)(g: T => A => B): RDD[B] =
-      rdd.mapPartitionsWithIndex { (i, it) =>
-        val t = f(i)
-        it.map(g(t))
-      }
-
-    override def zipMap[A, B : ClassTag, T : ClassTag](rdd1: RDD[A], rdd2: RDD[B])(f: (A, B) => T): RDD[T] =
-      rdd1.zip(rdd2).map(f.tupled)
-
-    override def zipWithIndexMap[A, B : ClassTag](rdd: RDD[A])(f: (A, Long) => B): RDD[B] =
-      rdd.zipWithIndex.map(f.tupled)
-
-    def size[A](rdd: RDD[A]): Long = rdd.count
-
-    override def sum(rdd: RDD[Double]): Double = new DoubleRDDFunctions(rdd).sum
-
-    override def persist[A](rdd: RDD[A]): RDD[A] = rdd.persist()
-
-    override def checkpoint[A](rdd: RDD[A]): Unit = rdd.localCheckpoint()
-
-    override def broadcast[A : ClassTag](a: A): Broadcast[A] = sc.broadcast(a)
-
-    override def retrieve[A](b: Broadcast[A]): A = b.value
 
   }
 
