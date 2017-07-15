@@ -47,7 +47,7 @@ object Main extends App {
   type L = BiallelicCoalescentLikelihood[ParArray, Some, X, Mu, X, Theta]
   type P = JointProbability[Double, L, ExponentialMarkovPrior[Double @@ Theta, Double @@ X, IndexedSeq[Double @@ Theta]]]
   val like: L = BiallelicCoalescentLikelihood(lit, tag[Mu](1E-7), tag[X](0.5), intervals, sites, init = true)
-  val prior = ExponentialMarkovPrior[Double @@ Theta, Double @@ X, IndexedSeq[Double @@ Theta]](IndexedSeq.fill(1)(tag[Theta](10000.0)), tag[X](1.0))
+  val prior = ExponentialMarkovPrior[Double @@ Theta, Double @@ X, IndexedSeq[Double @@ Theta]](IndexedSeq.fill(intervals.size)(tag[Theta](10000.0)), tag[X](1.0))
   val post: P = new JointProbability(like, prior)
 
   val _mu = implicitly[Lens[P, Double @@ Mu]]
