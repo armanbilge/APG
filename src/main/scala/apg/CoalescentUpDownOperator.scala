@@ -8,7 +8,7 @@ import spire.random.Generator
 import scala.annotation.tailrec
 import scala.collection.LinearSeq
 
-class CoalescentUpDownOperator[T](val scaleFactor: Double, val Ne: IndexedSeq[Lens[T, Double]], val mu: Traversable[Lens[T, Double]], val intervals: LinearSeq[(Int, Double, Int)])(implicit rng: Generator) extends Operator[T, Double] {
+class CoalescentUpDownOperator[T](val scaleFactor: Double, val Ne: IndexedSeq[Lens[T, Double]], val mu: Traversable[Lens[T, Double]], val intervals: LinearSeq[(Int, Double, Int)])(implicit val rng: Generator) extends Operator[T, Double] {
 
   def expectedTreeLength(t: T): Double =
     ExpectedTreeLength(intervals.map {
@@ -67,6 +67,6 @@ object CoalescentUpDownOperator {
   }
 
   implicit def coercer[T]: OperatorCoercer[T, Double, CoalescentUpDownOperator[T]] =
-    OperatorCoercer[T, Double, CoalescentUpDownOperator[T]](op => math.log(1 / op.scaleFactor - 1))(x => op => new CoalescentUpDownOperator[T](1 / (math.exp(x) + 1), op.Ne, op.mu, op.intervals))
+    OperatorCoercer[T, Double, CoalescentUpDownOperator[T]](op => math.log(1 / op.scaleFactor - 1))(x => op => new CoalescentUpDownOperator[T](1 / (math.exp(x) + 1), op.Ne, op.mu, op.intervals)(op.rng))
 
 }
