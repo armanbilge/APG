@@ -10,6 +10,8 @@ import scala.collection.LinearSeq
 
 class CoalescentUpDownOperator[T](val scaleFactor: Double, val Ne: IndexedSeq[Lens[T, Double]], val mu: Traversable[Lens[T, Double]], val intervals: LinearSeq[(Int, Double, Int)])(implicit val rng: Generator) extends Operator[T, Double] {
 
+  require(0 < scaleFactor && scaleFactor <= 1)
+
   def expectedTreeLength(t: T): Double =
     ExpectedTreeLength(intervals.map {
       case (n, length, i) => SampledCoalescentInterval(n, length, Ne(i).get(t))
