@@ -20,7 +20,7 @@ object specific {
 
     override def head[A](rdd: RDD[A]): A = rdd.first()
 
-    override def range(start: Long, end: Long): RDD[Long] = sc.range(start, end)
+    override def range(start: Int, end: Int): RDD[Int] = sc.range(start, end).map(_.toInt)
 
     override def map[A, B : ClassTag](rdd: RDD[A])(f: (A) => B): RDD[B] = rdd.map(f)
 

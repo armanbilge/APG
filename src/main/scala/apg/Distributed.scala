@@ -7,7 +7,7 @@ trait Distributed[D[X], B[X]] {
 
   def head[A](d: D[A]): A
 
-  def range(start: Long, end: Long): D[Long]
+  def range(start: Int, end: Int): D[Int]
 
   def map[A, B : ClassTag](d: D[A])(f: A => B): D[B]
 

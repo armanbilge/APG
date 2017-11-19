@@ -13,7 +13,7 @@ package object apg {
 
     override def head[A](a: ParArray[A]): A = a.head
 
-    override def range(start: Long, end: Long): ParArray[Long] = (start until end).toParArray
+    override def range(start: Int, end: Int): ParArray[Int] = (start until end).toParArray
 
     override def map[A, B : ClassTag](a: ParArray[A])(f: (A) => B): ParArray[B] = a.map(f)
 
