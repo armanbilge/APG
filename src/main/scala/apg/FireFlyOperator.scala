@@ -6,7 +6,7 @@ import spire.random.rng.MersenneTwister64
 
 import scala.language.higherKinds
 
-class FireFlyOperator[D[X], Z[X], B, P <: Probability[Double], L <: Probability[Double]](val `q_d->b`: Double, val rng: Array[Long] => Generator = MersenneTwister64.fromArray)(implicit distributed: Distributed[D, Z]) extends Operator[D[DatumLikelihood[B, P, L]], Double] {
+class FireFlyOperator[D[X], Z[X], B, P <: Probability[Double], L <: Probability[Double]](val `q_d->b`: Double, val rng: Array[Long] => Generator)(implicit distributed: Distributed[D, Z]) extends Operator[D[DatumLikelihood[B, P, L]], Double] {
 
   override def apply(d: D[DatumLikelihood[B, P, L]]): D[DatumLikelihood[B, P, L]] = {
     val `q_d->b` = this.`q_d->b`
@@ -36,7 +36,7 @@ class FireFlyOperator[D[X], Z[X], B, P <: Probability[Double], L <: Probability[
 
   override def hastingsRatio(x: D[DatumLikelihood[B, P, L]], y: D[DatumLikelihood[B, P, L]]): Double = {
     import distributed._
-    x.zipMap(y)(_.evaluate - _.evaluate).sum
+    x.map(_.evaluate).sum - y.map(_.evaluate).sum
   }
 
 }
