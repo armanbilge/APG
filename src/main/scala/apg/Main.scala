@@ -27,12 +27,12 @@ object Main extends App {
 
     case class Datum(age: Double, file: String)
     case class Interval(length: Double, theta: Double)
-    case class Config(data: List[Datum], threshold: Double, mu: Double, intervals: List[Interval], lit: Double, initLit: Option[String], length: Int, frequency: Int, seed: Option[Long])
+    case class Config(data: List[Datum], mu: Double, intervals: List[Interval], lit: Double, initLit: Option[String], length: Int, frequency: Int, seed: Option[Long])
 
     object YamlProtocol extends DefaultYamlProtocol {
       implicit val datumFormat = yamlFormat2(Datum)
       implicit val intervalFormat = yamlFormat2(Interval)
-      implicit val configFormat = yamlFormat9(Config)
+      implicit val configFormat = yamlFormat8(Config)
     }
     import YamlProtocol._
 
@@ -46,7 +46,7 @@ object Main extends App {
     trait Mu
     trait X
 
-    val sites = Sites[D, B](config.data.map(d => TimePoint.fromFile(d.age, new File(d.file))), config.threshold)
+    val sites = Sites[D, B](config.data.map(d => TimePoint.fromFile(d.age, new File(d.file))))
     val intervals = config.intervals.map(x => CoalescentInterval(x.length, tag[Theta](x.theta)))
     val lit = new IndexedSeq[Boolean @@ X] with Serializable {
       override val length = sites.size.toInt
