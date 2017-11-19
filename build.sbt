@@ -11,5 +11,5 @@ libraryDependencies ++= { scalaVersion.value match {
   case "2.11.8" => Seq("org.apache.spark" %% "spark-core" % "2.1.1" % Provided)
   case _ => Seq.empty
 }}
-libraryDependencies += "org.compevol" %% "mcmc" % "0.4"
+libraryDependencies += "org.compevol" %% "mcmc" % "0.5"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test"

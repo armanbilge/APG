@@ -70,12 +70,12 @@ object Main extends App {
     val muScaler = AutoTuningMCMC.statify[P, Double, ScaleOperator[P, Double]](new ScaleOperator[P, Double](scaleFactor, Traversable(mu)), if (estimateMu) 1.0 else 0.0)
     val thetaScalers = _theta.map(x => AutoTuningMCMC.statify[P, Double, ScaleOperator[P, Double]](new ScaleOperator[P, Double](scaleFactor, Traversable(x)), 1.0))
     val thetaScaler = AutoTuningMCMC.statify[P, Double, ScaleOperator[P, Double]](new ScaleOperator[P, Double](scaleFactor, _theta), _theta.length)
-    val upDownOp = AutoTuningMCMC.statify[P, Double, UpDownOperator[P, Double]](new UpDownOperator[P, Double](scaleFactor, Traversable(mu), _theta), if (estimateMu) _theta.length + 1.0 else 0.0)
+    val upDownOp = AutoTuningMCMC.statify[P, Double, CoalescentUpDownOperator[P]](CoalescentUpDownOperator[P, Theta](scaleFactor, _theta, Traversable(mu), sites.head, intervals), if (estimateMu) _theta.length + 1.0 else 0.0)
     val ffo = AutoTuningMCMC.statify[P, Double, FocusedOperator[P, D[DatumLikelihood[X, BiallelicSiteLikelihood, BiallelicCoalescentLikelihood.Lower]], Double, FireFlyOperator[D, B, X, BiallelicSiteLikelihood, BiallelicCoalescentLikelihood.Lower]]](new FocusedOperator[P, D[DatumLikelihood[X, BiallelicSiteLikelihood, BiallelicCoalescentLikelihood.Lower]], Double, FireFlyOperator[D, B, X, BiallelicSiteLikelihood, BiallelicCoalescentLikelihood.Lower]](new FireFlyOperator[D, B, X, BiallelicSiteLikelihood, BiallelicCoalescentLikelihood.Lower](config.lit, rngGen(rng)), _lights), 1)
 
     val pw = new PrintWriter(fn + ".log")
     pw.println((Traversable("state", "posterior", "likelihood", "prior", "mu") ++ intervals.indices.map("theta_" + _) ++ Traversable("lit")).mkString("\t"))
-    AutoTuningMCMC.chain[Double, P](post, IndexedSeq[OperatorState[P, Double, O] forSome {type O <: Operator[P, Double]}](muScaler, thetaScaler, upDownOp, ffo) ++ thetaScalers).toIterable.take(config.length + 1).zipWithIndex.filter(_._2 % config.frequency == 0).foreach { li =>
+    AutoTuningMCMC.chain[Double, P](post, config.length / 100, IndexedSeq[OperatorState[P, Double, O] forSome {type O <: Operator[P, Double]}](muScaler, thetaScaler, upDownOp, ffo) ++ thetaScalers).toIterable.take(config.length + 1).zipWithIndex.filter(_._2 % config.frequency == 0).foreach { li =>
       println((Traversable[Any](li._2, li._1._1.evaluate, li._1._1.p.evaluate, li._1._1.q.evaluate, mu.get(li._1._1)) ++ _theta.map(_.get(li._1._1)) ++ Traversable(li._1._1.p.fractionLit)).mkString("\t"))
       pw.println((Traversable[Any](li._2, li._1._1.evaluate, li._1._1.p.evaluate, li._1._1.q.evaluate, mu.get(li._1._1)) ++ _theta.map(_.get(li._1._1)) ++ Traversable(li._1._1.p.fractionLit)).mkString("\t"))
       pw.flush()
