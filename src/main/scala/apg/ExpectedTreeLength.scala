@@ -10,7 +10,7 @@ object ExpectedTreeLength {
     val Q = new UpperTriangularMatrix(y0.length)
     for (i <- 2 until Q.n) {
       Q(0, i) = i
-      Q(i, i) = - i * (i - 1) / 2.0 / theta
+      Q(i, i) = - i * (i - 1) / (2.0 * theta)
       Q(i-1, i) = - Q(i, i)
     }
     if (includeSingle) {
