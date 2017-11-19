@@ -3,6 +3,7 @@ package apg
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.{DoubleRDDFunctions, RDD}
+import spire.random.rng.MersenneTwister64
 
 import scala.reflect.ClassTag
 
@@ -13,6 +14,11 @@ object specific {
     .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     .registerKryoClasses(Array(classOf[TimePoint], classOf[Array[TimePoint]], classOf[Array[Array[TimePoint]]], classOf[InfiniteBiallelicCoalescentInterval]))
   )
+
+  def run(args: Array[String]): Unit = {
+    sc.setCheckpointDir(args(1))
+    Main.run[RDD, Broadcast](args(0), _ => x => MersenneTwister64.fromArray(x))
+  }
 
   implicit def rddIsDistributed: Distributed[RDD, Broadcast] = new RDDIsDistributed()
 
