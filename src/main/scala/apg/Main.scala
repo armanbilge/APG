@@ -27,12 +27,12 @@ object Main extends App {
 
     case class Datum(age: Double, file: String)
     case class Interval(length: Double, theta: Double)
-    case class Config(data: List[Datum], mu: Double, intervals: List[Interval], lit: Double, initLit: Option[String], length: Int, frequency: Int, seed: Option[Long])
+    case class Config(data: List[Datum], mu: Double, intervals: List[Interval], lit: Double, initLit: Option[String], length: Int, frequency: Int, tuningDelay: Option[Int], seed: Option[Long])
 
     object YamlProtocol extends DefaultYamlProtocol {
       implicit val datumFormat = yamlFormat2(Datum)
       implicit val intervalFormat = yamlFormat2(Interval)
-      implicit val configFormat = yamlFormat8(Config)
+      implicit val configFormat = yamlFormat9(Config)
     }
     import YamlProtocol._
 
@@ -75,7 +75,7 @@ object Main extends App {
 
     val pw = new PrintWriter(fn + ".log")
     pw.println((Traversable("state", "posterior", "likelihood", "prior", "mu") ++ intervals.indices.map("theta_" + _) ++ Traversable("lit")).mkString("\t"))
-    AutoTuningMCMC.chain[Double, P](post, config.length / 100, IndexedSeq[OperatorState[P, Double, O] forSome {type O <: Operator[P, Double]}](muScaler, thetaScaler, upDownOp, ffo) ++ thetaScalers).toIterable.take(config.length + 1).zipWithIndex.filter(_._2 % config.frequency == 0).foreach { li =>
+    AutoTuningMCMC.chain[Double, P](post, config.tuningDelay.getOrElse(config.length / 100), IndexedSeq[OperatorState[P, Double, O] forSome {type O <: Operator[P, Double]}](muScaler, thetaScaler, upDownOp, ffo) ++ thetaScalers).toIterable.take(config.length + 1).zipWithIndex.filter(_._2 % config.frequency == 0).foreach { li =>
       println((Traversable[Any](li._2, li._1._1.evaluate, li._1._1.p.evaluate, li._1._1.q.evaluate, mu.get(li._1._1)) ++ _theta.map(_.get(li._1._1)) ++ Traversable(li._1._1.p.fractionLit)).mkString("\t"))
       pw.println((Traversable[Any](li._2, li._1._1.evaluate, li._1._1.p.evaluate, li._1._1.q.evaluate, mu.get(li._1._1)) ++ _theta.map(_.get(li._1._1)) ++ Traversable(li._1._1.p.fractionLit)).mkString("\t"))
       pw.flush()
