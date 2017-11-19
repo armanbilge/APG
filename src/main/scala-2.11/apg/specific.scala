@@ -1,17 +1,22 @@
 package apg
 
-import org.apache.spark.SparkContext
+import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.{DoubleRDDFunctions, RDD}
 
 import scala.reflect.ClassTag
 
-
 object specific {
 
-  implicit def rddIsDistributed(implicit sc: SparkContext): Distributed[RDD, Broadcast] = new RDDISDistributed()
+  val sc = new SparkContext(new SparkConf()
+    .setAppName("apg")
+    .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    .registerKryoClasses(Array(classOf[TimePoint], classOf[Array[TimePoint]], classOf[Array[Array[TimePoint]]], classOf[InfiniteBiallelicCoalescentInterval]))
+  )
 
-  class RDDISDistributed(implicit @transient sc: SparkContext) extends Distributed[RDD, Broadcast] with Serializable {
+  implicit def rddIsDistributed: Distributed[RDD, Broadcast] = new RDDIsDistributed()
+
+  class RDDIsDistributed extends Distributed[RDD, Broadcast] with Serializable {
 
     override def head[A](rdd: RDD[A]): A = rdd.first()
 
@@ -39,7 +44,7 @@ object specific {
 
     override def persist[A](rdd: RDD[A]): RDD[A] = rdd.persist()
 
-    override def checkpoint[A](rdd: RDD[A]): Unit = rdd.localCheckpoint()
+    override def checkpoint[A](rdd: RDD[A]): Unit = rdd.checkpoint()
 
     override def broadcast[A : ClassTag](a: A): Broadcast[A] = sc.broadcast(a)
 
