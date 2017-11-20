@@ -40,7 +40,7 @@ package object apg {
 
     override def broadcast[A : ClassTag](a: A): Some[A] = Some(a)
 
-    override def retrieve[A](s: Some[A]): A = s.x
+    override def retrieve[A](s: Some[A]): A = s.value
 
   }
 
