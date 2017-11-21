@@ -28,7 +28,7 @@ case class InfiniteBiallelicCoalescentInterval(m: Int, k: Int, u: Double, v: Dou
     import spire.std.array._
     import spire.std.double._
     import spire.syntax.vectorSpace._
-    val pihat = new Q(m, u, v, coalRate).findOrthogonalVector(false)
+    val pihat = QMath.findOrthogonalVector(m, u, v, coalRate)
     val z = pihat(1) + pihat(2)
     pihat :/ z
   }

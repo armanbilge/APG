@@ -17,3 +17,13 @@ libraryDependencies ++= { scalaVersion.value match {
 }}
 libraryDependencies += "org.compevol" %% "mcmc" % "0.5"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test"
+
+lazy val compileNative = taskKey[Seq[File]]("Compile native code")
+compileNative := {
+  val uname = ("uname" !!).toLowerCase.trim
+  val out = resourceManaged.value / "apg.jni"
+  Seq("sh", "-c", s"cc -O3 -lc -shared -I$$JAVA_HOME/include -I$$JAVA_HOME/include/$uname -o $out src/main/c/apg/*.c").!
+  Seq(out)
+}
+(compile in Compile) <<= (compile in Compile).dependsOn(compileNative)
+resourceGenerators in Compile += compileNative.taskValue

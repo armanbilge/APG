@@ -39,7 +39,7 @@ object BiallelicSiteLikelihood {
         val c = (for (n <- 1 to fp.getSize; r <- 0 to n) yield fp.get(n, r)).max
         val f = new F(fp.getSize)
         for (n <- 1 to fp.getSize; r <- 0 to n) f.set(n, r, fp.get(n, r) / c)
-        (MatrixExponentiator.expQTtx(interval.m, interval.u, interval.v, interval.coalRate, interval.length, f), c * cp)
+        (QMath.expQTtx(interval.m, interval.u, interval.v, interval.coalRate, interval.length, f), c * cp)
       case interval: InfiniteBiallelicCoalescentInterval =>
         import spire.std.array._
         import spire.std.double._
