@@ -34,10 +34,6 @@ const double complex zi[CF_DEG] =
     -6.998688082445778 + 13.995917029301355 * I
   };
 
-unsigned int apg_calculate_dimension(unsigned int N) {
-  return ((N+1) * (N+1) + N - 1) / 2;
-}
-
 void solve_central_block_transposed(double x[], double y[], double offset, unsigned int n, double u, double v, double gamma) {
 
   double K = -(gamma * (n * (n-1))) / 2.0 - n * v + offset;
@@ -71,19 +67,18 @@ double* apg_find_orthogonal_vector(apg_q_t* q) {
   double gamma = q->gamma;
 
   unsigned int n, r, i;
-  unsigned int size = apg_calculate_dimension(N);
+  unsigned int dim = APG_CALCULATE_DIMENSION(N);
 
-  double* x = (double*) malloc(sizeof(double) * (size+1));
-  x[0] = 0;
+  double* x = malloc(sizeof(double) * (dim+1));
   double xn[N+1];
   double yn[N+1];
 
   xn[0] = u;
   xn[1] = v;
-  x[1] = u;
-  x[2] = v;
+  x[0] = u;
+  x[1] = v;
 
-  double* xptr = x + 3;
+  double* xptr = x + 2;
 
   for (n = 2; n <= N; ++n) {
 
@@ -99,6 +94,11 @@ double* apg_find_orthogonal_vector(apg_q_t* q) {
       *(xptr++) = xn[i];
     }
 
+  }
+
+  double z = x[0] + x[1];
+  for (n = 0, xptr = x; n <= dim; ++n, ++xptr) {
+    *xptr /= z;
   }
 
   return x;
@@ -143,7 +143,7 @@ void solve(apg_q_t* q, double complex y[], double complex offset, double complex
   double u = q->u;
   double v = q->v;
   double gamma = q->gamma;
-  unsigned int dim = apg_calculate_dimension(q->N) + 1;
+  unsigned int dim = APG_CALCULATE_DIMENSION(N) + 1;
 
   unsigned int i, n, r;
   double complex xn[N+1];
@@ -183,8 +183,9 @@ void solve(apg_q_t* q, double complex y[], double complex offset, double complex
 
 double* apg_cf_expmv(double time, apg_q_t* q, double v[]) {
 
-  unsigned int n = apg_calculate_dimension(q->N) + 1;
-  double* w = (double*) malloc(sizeof(double) * n);
+  unsigned int N = q->N;
+  unsigned int n = APG_CALCULATE_DIMENSION(N);
+  double* w = malloc(sizeof(double) * n);
 
   unsigned int i, j, k;
   double complex c_i, offset;
@@ -196,12 +197,12 @@ double* apg_cf_expmv(double time, apg_q_t* q, double v[]) {
     return w;
   }
 
-  complex double xc[n];
-  complex double wc[n];
-  complex double vc[n];
+  complex double xc[n+1];
+  complex double wc[n+1];
+  complex double vc[n+1];
 
-  for (i = 1; i < n; ++i) {
-    wc[i] = v[i];
+  for (i = 0; i < n; ++i) {
+    wc[i+1] = v[i];
   }
 
   unsigned int steps = 1;
@@ -209,7 +210,7 @@ double* apg_cf_expmv(double time, apg_q_t* q, double v[]) {
 
   for (k = 0; k < steps; ++k) {
 
-    for (i = 1; i < n; ++i) {
+    for (i = 1; i < n+1; ++i) {
       vc[i] = wc[i] / stepsize;
       wc[i] = 0;
     }
@@ -218,15 +219,15 @@ double* apg_cf_expmv(double time, apg_q_t* q, double v[]) {
       offset = - zi[i] / stepsize;
       solve(q, vc, offset, xc);
       c_i = ci[i];
-      for (j = 1; j < n; ++j) {
+      for (j = 1; j < n+1; ++j) {
         wc[j] += c_i * xc[j];
       }
     }
 
   }
 
-  for (i = 1; i < n; ++i) {
-    w[i] = creal(wc[i]);
+  for (i = 0; i < n; ++i) {
+    w[i] = creal(wc[i+1]);
   }
 
   return w;

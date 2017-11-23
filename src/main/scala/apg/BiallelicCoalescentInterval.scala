@@ -24,14 +24,7 @@ case class FiniteBiallelicCoalescentInterval(length: Double, m: Int, k: Int, u: 
 
 case class InfiniteBiallelicCoalescentInterval(m: Int, k: Int, u: Double, v: Double, coalRate: Double, coalIndex: Int) extends BiallelicCoalescentInterval {
 
-  lazy val pi = {
-    import spire.std.array._
-    import spire.std.double._
-    import spire.syntax.vectorSpace._
-    val pihat = QMath.findOrthogonalVector(m, u, v, coalRate)
-    val z = pihat(1) + pihat(2)
-    pihat :/ z
-  }
+  lazy val pi = NativeLib.findOrthogonalVector(m, u, v, coalRate)
 
   def updatedCoalRate(coalRate: Double): InfiniteBiallelicCoalescentInterval = copy(coalRate = coalRate)
 

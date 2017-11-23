@@ -1,13 +1,7 @@
-import snap.FMatrix
-import snap.matrix.QMatrix
-
 import scala.collection.parallel.mutable.ParArray
 import scala.reflect.ClassTag
 
 package object apg {
-
-  type F = FMatrix
-  type Q = QMatrix
 
   implicit object ArrayIsDistributed extends Distributed[Array, Some] {
 
