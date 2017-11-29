@@ -9,6 +9,7 @@ scalacOptions := { scalaVersion.value match {
 }}
 resolvers += Resolver.sonatypeRepo("snapshots")
 libraryDependencies += "com.chuusai" %% "shapeless" % "2.3.2"
+libraryDependencies += "com.github.samtools" % "htsjdk" % "2.13.1"
 libraryDependencies += "net.jcazevedo" %% "moultingyaml" % "0.4.1-SNAPSHOT"
 libraryDependencies += "org.apache.commons" % "commons-math3" % "3.6.1"
 libraryDependencies ++= { scalaVersion.value match {
