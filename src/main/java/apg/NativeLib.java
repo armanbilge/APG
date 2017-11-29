@@ -53,7 +53,7 @@ public class NativeLib {
         return new NativePointer(copyToNativeImpl(a));
     }
 
-    public static native long copyToNativeImpl(double[] a);
+    private static native long copyToNativeImpl(double[] a);
 
     public static native void free(long ptr);
 

@@ -19,6 +19,14 @@ import scala.language.{existentials, higherKinds}
 
 object Main extends App {
 
+  def time[R](block: => R): R = {
+    val t0 = System.nanoTime()
+    val result = block
+    val t1 = System.nanoTime()
+    println("Elapsed time: " + (t1 - t0) + "ns")
+    result
+  }
+
   specific.run(args)
 
   def run[D[X], B[X]](fn: String, rngGen: Generator => Array[Long] => Generator)(implicit distributed: Distributed[D, B]): Unit = {
@@ -75,11 +83,11 @@ object Main extends App {
 
     val pw = new PrintWriter(fn + ".log")
     pw.println((Traversable("state", "posterior", "likelihood", "prior", "mu") ++ intervals.indices.map("theta_" + _) ++ Traversable("lit")).mkString("\t"))
-    AutoTuningMCMC.chain[Double, P](post, config.tuningDelay.getOrElse(config.length / 100), IndexedSeq[OperatorState[P, Double, O] forSome {type O <: Operator[P, Double]}](muScaler, thetaScaler, upDownOp, ffo) ++ thetaScalers).toIterable.take(config.length + 1).zipWithIndex.filter(_._2 % config.frequency == 0).foreach { li =>
+    time(AutoTuningMCMC.chain[Double, P](post, config.tuningDelay.getOrElse(config.length / 100), IndexedSeq[OperatorState[P, Double, O] forSome {type O <: Operator[P, Double]}](muScaler, thetaScaler, upDownOp, ffo) ++ thetaScalers).toIterable.take(config.length + 1).zipWithIndex.filter(_._2 % config.frequency == 0).foreach { li =>
       println((Traversable[Any](li._2, li._1._1.evaluate, li._1._1.p.evaluate, li._1._1.q.evaluate, mu.get(li._1._1)) ++ _theta.map(_.get(li._1._1)) ++ Traversable(li._1._1.p.fractionLit)).mkString("\t"))
       pw.println((Traversable[Any](li._2, li._1._1.evaluate, li._1._1.p.evaluate, li._1._1.q.evaluate, mu.get(li._1._1)) ++ _theta.map(_.get(li._1._1)) ++ Traversable(li._1._1.p.fractionLit)).mkString("\t"))
       pw.flush()
-    }
+    })
 
   }
 

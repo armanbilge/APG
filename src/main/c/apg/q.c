@@ -34,7 +34,7 @@ const double complex zi[CF_DEG] =
     -6.998688082445778 + 13.995917029301355 * I
   };
 
-void solve_central_block_transposed(double x[], double y[], double offset, unsigned int n, double u, double v, double gamma) {
+void solve_central_block_transposed(double* restrict x, double* restrict y, double offset, int n, double u, double v, double gamma) {
 
   double K = -(gamma * (n * (n-1))) / 2.0 - n * v + offset;
 
@@ -61,15 +61,15 @@ void solve_central_block_transposed(double x[], double y[], double offset, unsig
 
 double* apg_find_orthogonal_vector(apg_q_t* q) {
 
-  unsigned int N = q->N;
+  int N = q->N;
   double u = q->u;
   double v = q->v;
   double gamma = q->gamma;
 
-  unsigned int n, r, i;
-  unsigned int dim = APG_CALCULATE_DIMENSION(N);
+  int n, r, i;
+  int dim = APG_CALCULATE_DIMENSION(N);
 
-  double* x = malloc(sizeof(double) * (dim+1));
+  double* x = malloc(sizeof(double) * dim);
   double xn[N+1];
   double yn[N+1];
 
@@ -105,7 +105,7 @@ double* apg_find_orthogonal_vector(apg_q_t* q) {
 
 }
 
-void solve_central_block(double complex y[], double complex offset, unsigned int n, double u, double v, double gamma, double complex x[]) {
+void solve_central_block(double complex * restrict y, double complex offset, int n, double u, double v, double gamma, double complex * restrict x) {
 
   double complex K = - (gamma * (n * (n-1))) / 2.0 - n * v + offset;
 
@@ -130,22 +130,22 @@ void solve_central_block(double complex y[], double complex offset, unsigned int
 
 }
 
-void multiply_upper_block(double complex x[], unsigned int n, double gamma, double complex y[]) {
+void multiply_upper_block(double complex * restrict x, int n, double gamma, double complex * restrict y) {
   int r;
   for (r = 0; r <= n; ++r) {
     y[r] = (gamma * (n-r) * (n+1) / 2.0) * x[r] + (gamma * r * (n+1) / 2.0) * x[r+1];
   }
 }
 
-void solve(apg_q_t* q, double complex y[], double complex offset, double complex x[]) {
+void solve(apg_q_t* q, double complex * restrict y, double complex offset, double complex * restrict x) {
 
-  unsigned int N = q->N;
+  int N = q->N;
   double u = q->u;
   double v = q->v;
   double gamma = q->gamma;
-  unsigned int dim = APG_CALCULATE_DIMENSION(N) + 1;
+  int dim = APG_CALCULATE_DIMENSION(N) + 1;
 
-  unsigned int i, n, r;
+  int i, n, r;
   double complex xn[N+1];
   double complex yn[N+1];
 
@@ -183,11 +183,11 @@ void solve(apg_q_t* q, double complex y[], double complex offset, double complex
 
 double* apg_cf_expmv(double time, apg_q_t* q, double v[]) {
 
-  unsigned int N = q->N;
-  unsigned int n = APG_CALCULATE_DIMENSION(N);
+  int N = q->N;
+  int n = APG_CALCULATE_DIMENSION(N);
   double* w = malloc(sizeof(double) * n);
 
-  unsigned int i, j, k;
+  int i, j, k;
   double complex c_i, offset;
 
   if (time == 0.0) {
@@ -205,7 +205,7 @@ double* apg_cf_expmv(double time, apg_q_t* q, double v[]) {
     wc[i+1] = v[i];
   }
 
-  unsigned int steps = 1;
+  int steps = 1;
   double stepsize = time / steps;
 
   for (k = 0; k < steps; ++k) {

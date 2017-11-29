@@ -3,20 +3,20 @@
 
 #define F_GET(f, n, r) ((f) + (n) * ((n)+1) / 2 - 1 + (r))
 
-double* apg_f_from_partial(unsigned int n, double* partial) {
+double* apg_f_from_partial(int n, double* partial) {
   double* f = (double*) malloc(sizeof(double) * APG_CALCULATE_DIMENSION(n));
   double* fptr;
   double* fn = F_GET(f, n, 0);
   for (fptr = f; fptr < fn; ++fptr) *fptr = 0;
-  unsigned int r;
+  int r;
   for (r = 0; r <= n; ++r, ++fptr) {
     *fptr = *(partial++);
   }
   return f;
 }
 
-double* apg_f_with_partial(unsigned int n, double* f, unsigned int k, double* partial) {
-  unsigned int i, r, np = APG_CALCULATE_DIMENSION(n+k);
+double* apg_f_with_partial(int n, double* restrict f, int k, double* restrict partial) {
+  int i, r, np = APG_CALCULATE_DIMENSION(n+k);
   double* fp = (double*) malloc(sizeof(double) * np);
   double fnr, *fptr;
   for (i = 0, fptr = fp; i < np; ++i, ++fptr) *fptr = 0;
@@ -31,9 +31,9 @@ double* apg_f_with_partial(unsigned int n, double* f, unsigned int k, double* pa
   return fp;
 }
 
-double apg_dot_product(unsigned int n, double* x, double* y) {
+double apg_dot_product(int n, double* restrict x, double* restrict y) {
   double sum = 0;
-  unsigned int i;
+  int i;
   for (i = 0; i < n; ++i) {
     sum += *(x++) * *(y++);
   }

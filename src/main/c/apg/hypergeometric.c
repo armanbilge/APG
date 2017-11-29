@@ -5,7 +5,7 @@
 double cache[DIM+1][DIM+1][DIM+1][DIM+1];
 
 void apg_hypergeometric_initialize() {
-  unsigned int N, K, n, k;
+  int N, K, n, k;
   for (N = 0; N <= DIM; ++N) {
     for (K = 0; K <= DIM; ++K) {
       for (n = 0; n <= DIM; ++n) {
@@ -17,6 +17,6 @@ void apg_hypergeometric_initialize() {
   }
 }
 
-double apg_hypergeometric_pmf(unsigned int N, unsigned int K, unsigned int n, unsigned int k) {
+double apg_hypergeometric_pmf(int N, int K, int n, int k) {
   return cache[N][K][n][k];
 }

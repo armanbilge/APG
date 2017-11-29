@@ -21,7 +21,7 @@ libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test"
 lazy val compileNative = taskKey[Seq[File]]("Compile native code")
 compileNative := {
   val out = resourceManaged.value / "apg.jni"
-  Seq("sh", "-c", s"gcc-7 -O3 -lc -lgsl -shared -o $out src/main/c/apg/*.c").!
+  Seq("sh", "-c", s"cc -O3 -march=native -mtune=native $$CFLAGS -lc -lgsl -shared -o $out src/main/c/apg/*.c").!
   Seq(out)
 }
 (compile in Compile) <<= (compile in Compile).dependsOn(compileNative)

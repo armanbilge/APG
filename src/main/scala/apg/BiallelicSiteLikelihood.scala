@@ -32,7 +32,8 @@ object BiallelicSiteLikelihood {
     F
   }
 
-  abstract class CachedF(fp: => NativePointer, val interval: BiallelicCoalescentInterval) extends Serializable {
+  abstract class CachedF(_fp: => NativePointer, val interval: BiallelicCoalescentInterval) extends Serializable {
+    lazy val fp = _fp
     lazy val f: NativePointer = interval match {
       case interval: FiniteBiallelicCoalescentInterval => NativeLib.expQTtx(interval.m, interval.u, interval.v, interval.coalRate, interval.length, fp)
       case _: InfiniteBiallelicCoalescentInterval => fp

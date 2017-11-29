@@ -25,8 +25,8 @@ JNIEXPORT jlong JNICALL Java_apg_NativeLib_expQTtx(JNIEnv *env, jclass clazz, ji
 }
 
 JNIEXPORT jdouble JNICALL Java_apg_NativeLib_siteLikelihood(JNIEnv* env, jclass clazz, jint N, jlong f, jlong x) {
-  unsigned int n = APG_CALCULATE_DIMENSION(N);
-  unsigned int i;
+  int n = APG_CALCULATE_DIMENSION(N);
+  int i;
   return apg_dot_product(n, (double*) f, (double*) x);
 }
 
