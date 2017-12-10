@@ -76,7 +76,8 @@ object Main extends App {
     val scaleFactor = 0.75
     val estimateMu = config.data.size > 1
     val muScaler = AutoTuningMCMC.statify[P, Double, ScaleOperator[P, Double]](new ScaleOperator[P, Double](scaleFactor, Traversable(mu)), if (estimateMu) 1.0 else 0.0)
-    val thetaScalers = _theta.map(x => AutoTuningMCMC.statify[P, Double, ScaleOperator[P, Double]](new ScaleOperator[P, Double](scaleFactor, Traversable(x)), 1.0))
+    val thetaScalers = _theta.map(x => AutoTuningMCMC.statify[P, Double, ScaleOperator[P, Double]](new ScaleOperator[P, Double](scaleFactor, Traversable(x)), 1.0)) ++
+      _theta.sliding(2).map(x => AutoTuningMCMC.statify[P, Double, ScaleOperator[P, Double]](new ScaleOperator[P, Double](scaleFactor, x), 2.0))
     val thetaScaler = AutoTuningMCMC.statify[P, Double, ScaleOperator[P, Double]](new ScaleOperator[P, Double](scaleFactor, _theta), _theta.length)
     val upDownOp = AutoTuningMCMC.statify[P, Double, CoalescentUpDownOperator[P]](CoalescentUpDownOperator[P, Theta](scaleFactor, _theta, Traversable(mu), sites.head, intervals), if (estimateMu) _theta.length + 1.0 else 0.0)
     val ffo = AutoTuningMCMC.statify[P, Double, FocusedOperator[P, D[DatumLikelihood[X, BiallelicSiteLikelihood, BiallelicCoalescentLikelihood.Lower]], Double, FireFlyOperator[D, B, X, BiallelicSiteLikelihood, BiallelicCoalescentLikelihood.Lower]]](new FocusedOperator[P, D[DatumLikelihood[X, BiallelicSiteLikelihood, BiallelicCoalescentLikelihood.Lower]], Double, FireFlyOperator[D, B, X, BiallelicSiteLikelihood, BiallelicCoalescentLikelihood.Lower]](new FireFlyOperator[D, B, X, BiallelicSiteLikelihood, BiallelicCoalescentLikelihood.Lower](config.lit, rngGen(rng)), _lights), 1)
