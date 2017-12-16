@@ -4,7 +4,9 @@ import apg.BiallelicCoalescentLikelihood.Lower
 import mcmc.Probability
 import monocle.Lens
 import monocle.function.At
+import shapeless.tag
 import shapeless.tag.@@
+import spire.random.Generator
 
 import scala.annotation.tailrec
 import scala.collection.LinearSeq
@@ -55,7 +57,27 @@ class BiallelicCoalescentLikelihood[D[X], I[X], B, M, Π, Θ](val lights: D[Datu
 
 object BiallelicCoalescentLikelihood {
 
-  def apply[D[X], I[X], B, M, Π, Θ](lit: IndexedSeq[Boolean @@ B], mu: Double @@ M, piRed: Double @@ Π, coalIntervals: LinearSeq[CoalescentInterval[Θ]], data: D[LinearSeq[TimePoint]], init: Boolean = false)(implicit distributed: Distributed[D, I]): BiallelicCoalescentLikelihood[D, I, B, M, Π, Θ] = {
+  def apply[D[X], I[X], B, M, Π, Θ](mu: Double @@ M, piRed: Double @@ Π, coalIntervals: LinearSeq[CoalescentInterval[Θ]], data: D[LinearSeq[TimePoint]])(implicit distributed: Distributed[D, I], rng: Generator): BiallelicCoalescentLikelihood[D, I, B, M, Π, Θ] = {
+
+    apply[D, I, B, M, Π, Θ]((i: Int, like: BiallelicSiteLikelihood, bound: Lower) => {
+      val dl = new DatumLikelihood[B, BiallelicSiteLikelihood, Lower](tag[B](false), like, bound)
+      val flipped = new DatumLikelihood[B, BiallelicSiteLikelihood, Lower](tag[B](true), like, bound)
+      val oddsRatio = math.exp(flipped.evaluate - dl.evaluate)
+      if (rng.nextDouble() < oddsRatio / (oddsRatio + 1))
+        flipped
+      else
+        dl
+    }, mu, piRed, coalIntervals, data)
+
+  }
+
+  def apply[D[X], I[X], B, M, Π, Θ](lit: IndexedSeq[Boolean @@ B], mu: Double @@ M, piRed: Double @@ Π, coalIntervals: LinearSeq[CoalescentInterval[Θ]], data: D[LinearSeq[TimePoint]])(implicit distributed: Distributed[D, I]): BiallelicCoalescentLikelihood[D, I, B, M, Π, Θ] = {
+
+    apply[D, I, B, M, Π, Θ]((i: Int, like: BiallelicSiteLikelihood, bound: Lower) => new DatumLikelihood[B, BiallelicSiteLikelihood, Lower](lit(i), like, bound), mu, piRed, coalIntervals, data)
+
+  }
+
+  def apply[D[X], I[X], B, M, Π, Θ](f: (Int, BiallelicSiteLikelihood, Lower) => DatumLikelihood[B, BiallelicSiteLikelihood, Lower], mu: Double @@ M, piRed: Double @@ Π, coalIntervals: LinearSeq[CoalescentInterval[Θ]], data: D[LinearSeq[TimePoint]])(implicit distributed: Distributed[D, I]): BiallelicCoalescentLikelihood[D, I, B, M, Π, Θ] = {
 
     import distributed._
 
@@ -77,11 +99,7 @@ object BiallelicCoalescentLikelihood {
         new Lower(greenP, greenScaler, false)
       else
         new Lower(redP, redScaler, true)
-      val dl = new DatumLikelihood[B, BiallelicSiteLikelihood, Lower](lit(i.toInt), like, bound)
-      if (init && dl.evaluate.isNegInfinity)
-        dl.flipped
-      else
-        dl
+      f(i.toInt, like, bound)
     }.persist()
     new BiallelicCoalescentLikelihood[D, I, B, M, Π, Θ](lights, greenBound, redBound, mu, piRed, broadcastedInfiniteInterval, coalIntervals, head, greenData, redData, 0)
 
