@@ -6,7 +6,9 @@ import itertools as it
 from numpy.polynomial.polynomial import polymul
 
 def print_join(iter):
+    print(next(iter), end='')
     for x in iter:
+        print('\t', end='')
         print(x, end='')
     print()
 
