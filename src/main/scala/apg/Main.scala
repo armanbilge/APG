@@ -48,16 +48,11 @@ object Main extends App {
 
     val sites = Sites[D, B](config.data.map(d => TimePoint.fromFile(d.age, new File(d.file))))
     val intervals = config.intervals.map(x => CoalescentInterval(x.length, tag[Theta](x.theta)))
-    val lit = new IndexedSeq[Boolean @@ X] with Serializable {
-      override val length = sites.size.toInt
-      val f = tag[X](false)
-      override def apply(idx: Int) = f
-    }
 
     type L = BiallelicCoalescentLikelihood[D, B, X, Mu, X, Theta]
     type Pr = ExponentialMarkovPrior[Double @@ Theta, Double @@ X, IndexedSeq[Double @@ Theta]]
     type P = JointProbability[Double, L, Pr]
-    val like: L = BiallelicCoalescentLikelihood[D, B, X, Mu, X, Theta](lit, tag[Mu](config.mu), tag[X](0.5), intervals, sites, true)
+    val like: L = BiallelicCoalescentLikelihood[D, B, X, Mu, X, Theta](tag[Mu](config.mu), tag[X](0.5), intervals, sites)
     val prior: Pr = ExponentialMarkovPrior[Double @@ Theta, Double @@ X, IndexedSeq[Double @@ Theta]](config.intervals.view.map(_.theta).map(tag[Theta](_)).toIndexedSeq, tag[X](1.0))
     val post: P = new JointProbability(like, prior)
 
