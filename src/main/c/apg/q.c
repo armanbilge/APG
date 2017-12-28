@@ -97,7 +97,7 @@ double* apg_find_orthogonal_vector(apg_q_t* q) {
   }
 
   double z = x[0] + x[1];
-  for (n = 0, xptr = x; n <= dim; ++n, ++xptr) {
+  for (n = 0, xptr = x; n < dim; ++n, ++xptr) {
     *xptr /= z;
   }
 
