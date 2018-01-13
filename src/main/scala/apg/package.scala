@@ -1,6 +1,3 @@
-import snap.FMatrix
-import snap.matrix.QMatrix
-
 import scala.collection.parallel.mutable.ParArray
 import scala.reflect.ClassTag
 
