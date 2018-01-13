@@ -9,11 +9,7 @@ class BiallelicSiteLikelihood(val piRed: Double, infiniteInterval: => InfiniteBi
 
   require(0 < piRed && piRed < 1.0)
 
-  lazy val evaluate: Double = {
-    val z = F.c
-    println(math.log(z))
-    z
-  }
+  lazy val evaluate: Double = F.c
 
   def updatedCoalRate(i: Int, coalRate: Double, infiniteInterval: => InfiniteBiallelicCoalescentInterval): BiallelicSiteLikelihood = new BiallelicSiteLikelihood(piRed, infiniteInterval, partials, F.updatedCoalRate(i, coalRate))
 
