@@ -54,7 +54,7 @@ object Main extends App {
     type P = JointProbability[Double, L, Pr]
     val like: L = BiallelicCoalescentLikelihood[D, B, X, Mu, X, Theta](tag[Mu](config.mu), tag[X](0.5), intervals, sites)
     val prior: Pr = ExponentialMarkovPrior[Double @@ Theta, Double @@ X, IndexedSeq[Double @@ Theta]](config.intervals.view.map(_.theta).map(tag[Theta](_)).toIndexedSeq, tag[X](1.0))
-    val post: P = new JointProbability(like, prior)
+    val post: P = new JointProbability[Double, L, Pr](like, prior)
 
     val mu = implicitly[Lens[P, Double @@ Mu]]
     val _theta = intervals.indices.map(implicitly[At[P, Int, Double @@ Theta]].at).map(mcmc.implicits.untaggedLens[P, Double, Theta])

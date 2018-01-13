@@ -2,7 +2,6 @@ package apg
 
 import apg.BiallelicSiteLikelihood.CachedF
 import mcmc.Probability
-import snap.likelihood.MatrixExponentiator
 
 import scala.collection.LinearSeq
 
@@ -10,7 +9,11 @@ class BiallelicSiteLikelihood(val piRed: Double, infiniteInterval: => InfiniteBi
 
   require(0 < piRed && piRed < 1.0)
 
-  lazy val evaluate: Double = F.c
+  lazy val evaluate: Double = {
+    val z = F.c
+    println(math.log(z))
+    z
+  }
 
   def updatedCoalRate(i: Int, coalRate: Double, infiniteInterval: => InfiniteBiallelicCoalescentInterval): BiallelicSiteLikelihood = new BiallelicSiteLikelihood(piRed, infiniteInterval, partials, F.updatedCoalRate(i, coalRate))
 
@@ -36,25 +39,25 @@ object BiallelicSiteLikelihood {
     private[this] lazy val (fp, cp) = fc
     lazy val (f, c): (F, Double) = interval match {
       case interval: FiniteBiallelicCoalescentInterval =>
-        val c = (for (n <- 1 to fp.getSize; r <- 0 to n) yield fp.get(n, r)).max
-        val f = new F(fp.getSize)
-        for (n <- 1 to fp.getSize; r <- 0 to n) f.set(n, r, fp.get(n, r) / c)
-        (QMath.expQTtx(interval.m, interval.u, interval.v, interval.coalRate, interval.length, f), c * cp)
+        val c = (for (n <- 1 to fp.N; r <- 0 to n) yield fp(n, r)).max
+        val f = F(fp.N)
+        for (n <- 1 to fp.N; r <- 0 to n) f(n, r) = fp(n, r) / c
+        (Q.expQTtx(12, 1, interval.m, interval.u, interval.v, interval.coalRate, interval.length, f), c * cp)
       case interval: InfiniteBiallelicCoalescentInterval =>
         import spire.std.array._
         import spire.std.double._
         import spire.syntax.innerProductSpace._
-        (null, cp * (fp.asVectorCopyBase1() dot interval.pi))
+        (null, cp * (fp.f dot interval.pi))
     }
     def updatedCoalRate(i: Int, coalRate: Double): CachedF
   }
 
   class Nested(interval: BiallelicCoalescentInterval, partial: Int => Double, previousF: CachedF) extends CachedF({
     val F = if (interval.k > 0) {
-      val F = new F(interval.m)
+      val F = apg.F(interval.m)
       val k = interval.k
-      for (i <- 0 to k; n <- 1 to previousF.f.getSize; r <- 0 to n)
-        F.set(n + k, r + i, F.get(n + k, r + i) + math.max(previousF.f.get(n, r), 0) * partial(i) * HypergeometricPMF(n + k, r + i, k).apply(i))
+      for (i <- 0 to k; n <- 1 to previousF.f.N; r <- 0 to n)
+        F(n + k, r + i) = F(n + k, r + i) + math.max(previousF.f(n, r), 0) * partial(i) * HypergeometricPMF(n + k, r + i, k).apply(i)
       F
     } else previousF.f
     (F, previousF.c)
@@ -74,10 +77,10 @@ object BiallelicSiteLikelihood {
   class Base(interval: BiallelicCoalescentInterval, baseF: => F) extends CachedF((baseF, 1), interval) with Serializable {
 
     def this(interval: BiallelicCoalescentInterval, partial: Int => Double) = this(interval, {
-      val F = new F(interval.m)
+      val f = F(interval.m)
       for (r <- 0 to interval.m)
-        F.set(interval.m, r, partial(r))
-      F
+        f(interval.m, r) = partial(r)
+      f
     })
 
     def updatedCoalRate(i: Int, coalRate: Double): Base = {

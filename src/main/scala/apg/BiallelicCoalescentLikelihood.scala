@@ -62,8 +62,14 @@ object BiallelicCoalescentLikelihood {
     apply[D, I, B, M, Π, Θ]((i: Int, like: BiallelicSiteLikelihood, bound: Lower) => {
       val dl = new DatumLikelihood[B, BiallelicSiteLikelihood, Lower](tag[B](false), like, bound)
       val flipped = new DatumLikelihood[B, BiallelicSiteLikelihood, Lower](tag[B](true), like, bound)
+      if (flipped.evaluate.isInfinite && dl.evaluate.isInfinite)
+        throw new RuntimeException
       val oddsRatio = math.exp(flipped.evaluate - dl.evaluate)
-      if (rng.nextDouble() < oddsRatio / (oddsRatio + 1))
+      if (flipped.evaluate.isInfinite)
+        dl
+      else if (dl.evaluate.isInfinite)
+        flipped
+      else if (rng.nextDouble() < oddsRatio / (oddsRatio + 1))
         flipped
       else
         dl
