@@ -1,10 +1,10 @@
 package apg
 
-class F(val N: Int, val f: Array[Double]) {
+class F(val N: Int, val f: Array[Float]) {
 
-  def apply(n: Int, r: Int): Double = f(n*(n+1)/2-1+r)
+  def apply(n: Int, r: Int): Float = f(n*(n+1)/2-1+r)
 
-  def update(n: Int, r: Int, x: Double): Unit = f(n*(n+1)/2-1+r) = x
+  def update(n: Int, r: Int, x: Float): Unit = f(n*(n+1)/2-1+r) = x
 
 }
 

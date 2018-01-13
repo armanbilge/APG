@@ -59,14 +59,14 @@ void solve_central_block_transposed(double* restrict x, double* restrict y, doub
 
 }
 
-JNIEXPORT jdoubleArray JNICALL Java_apg_Q_00024_findOrthogonalVector
+JNIEXPORT jfloatArray JNICALL Java_apg_Q_00024_findOrthogonalVector
   (JNIEnv* env, jobject this, jint N, jdouble u, jdouble v, jdouble gamma) {
 
   int n, r, i;
   int dim = APG_CALCULATE_DIMENSION(N);
 
-  jdoubleArray jx = (*env)->NewDoubleArray(env, dim);
-  jdouble* restrict x = (*env)->GetPrimitiveArrayCritical(env, jx, NULL);
+  jfloatArray jx = (*env)->NewFloatArray(env, dim);
+  jfloat* restrict x = (*env)->GetPrimitiveArrayCritical(env, jx, NULL);
 
   double xn[N+1];
   double yn[N+1];
@@ -77,7 +77,7 @@ JNIEXPORT jdoubleArray JNICALL Java_apg_Q_00024_findOrthogonalVector
   x[0] = u / z;
   x[1] = v / z;
 
-  double* restrict xptr = x + 2;
+  float* restrict xptr = x + 2;
 
   for (n = 2; n <= N; ++n) {
 
@@ -173,8 +173,8 @@ void solve(int N, double u, double v, double gamma, double complex * restrict y,
 
 }
 
-JNIEXPORT jdoubleArray JNICALL Java_apg_Q_00024_expQTtx
-  (JNIEnv* env, jobject this, jint degree, jint steps, jint N, jdouble u, jdouble v, jdouble gamma, jdouble t, jdoubleArray jx) {
+JNIEXPORT jfloatArray JNICALL Java_apg_Q_00024_expQTtx
+  (JNIEnv* env, jobject this, jint degree, jint steps, jint N, jdouble u, jdouble v, jdouble gamma, jdouble t, jfloatArray jx) {
 
   int n = APG_CALCULATE_DIMENSION(N);
   double complex * restrict ci = residues[degree-1];
@@ -187,7 +187,7 @@ JNIEXPORT jdoubleArray JNICALL Java_apg_Q_00024_expQTtx
   double complex wc[n+1];
   double complex vc[n+1];
 
-  jdouble* restrict x = (*env)->GetPrimitiveArrayCritical(env, jx, NULL);
+  jfloat* restrict x = (*env)->GetPrimitiveArrayCritical(env, jx, NULL);
   for (i = 0; i < n; ++i) {
     wc[i+1] = x[i];
   }
@@ -213,8 +213,8 @@ JNIEXPORT jdoubleArray JNICALL Java_apg_Q_00024_expQTtx
 
   }
 
-  jdoubleArray jw = (*env)->NewDoubleArray(env, n);
-  jdouble* restrict w = (*env)->GetPrimitiveArrayCritical(env, jw, NULL);
+  jfloatArray jw = (*env)->NewFloatArray(env, n);
+  jfloat* restrict w = (*env)->GetPrimitiveArrayCritical(env, jw, NULL);
   for (i = 0; i < n; ++i) {
     w[i] = creal(wc[i+1]);
   }

@@ -45,7 +45,7 @@ object BiallelicSiteLikelihood {
         (Q.expQTtx(12, 1, interval.m, interval.u, interval.v, interval.coalRate, interval.length, f), c * cp)
       case interval: InfiniteBiallelicCoalescentInterval =>
         import spire.std.array._
-        import spire.std.double._
+        import spire.std.float._
         import spire.syntax.innerProductSpace._
         (null, cp * (fp.f dot interval.pi))
     }
@@ -57,7 +57,7 @@ object BiallelicSiteLikelihood {
       val F = apg.F(interval.m)
       val k = interval.k
       for (i <- 0 to k; n <- 1 to previousF.f.N; r <- 0 to n)
-        F(n + k, r + i) = F(n + k, r + i) + math.max(previousF.f(n, r), 0) * partial(i) * HypergeometricPMF(n + k, r + i, k).apply(i)
+        F(n + k, r + i) = F(n + k, r + i) + math.max(previousF.f(n, r), 0) * (partial(i) * HypergeometricPMF(n + k, r + i, k).apply(i)).toFloat
       F
     } else previousF.f
     (F, previousF.c)
@@ -79,7 +79,7 @@ object BiallelicSiteLikelihood {
     def this(interval: BiallelicCoalescentInterval, partial: Int => Double) = this(interval, {
       val f = F(interval.m)
       for (r <- 0 to interval.m)
-        f(interval.m, r) = partial(r)
+        f(interval.m, r) = partial(r).toFloat
       f
     })
 

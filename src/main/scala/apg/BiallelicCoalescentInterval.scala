@@ -24,7 +24,7 @@ case class FiniteBiallelicCoalescentInterval(length: Double, m: Int, k: Int, u: 
 
 case class InfiniteBiallelicCoalescentInterval(m: Int, k: Int, u: Double, v: Double, coalRate: Double, coalIndex: Int) extends BiallelicCoalescentInterval {
 
-  lazy val pi = Q.findOrthogonalVector(m, u, v, coalRate)
+  lazy val pi: Array[Float] = Q.findOrthogonalVector(m, u, v, coalRate)
 
   def updatedCoalRate(coalRate: Double): InfiniteBiallelicCoalescentInterval = copy(coalRate = coalRate)
 
