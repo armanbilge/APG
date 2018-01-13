@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include <complex.h>
 #include "apg_Q__.h"
 
