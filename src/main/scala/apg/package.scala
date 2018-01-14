@@ -26,7 +26,21 @@ package object apg {
 
     def size[A](a: Array[A]): Long = a.length
 
-    override def sum(a: Array[Double]): Double = genericArrayOps(a).sum
+    override def sum(a: Array[Double]): Double = {
+
+      def recurse(offset: Int, length: Int): Double = if (length < 128) {
+        var s: Float = 0
+        import spire.syntax.cfor.cforRange
+        cforRange(offset until offset+length) { i => s += a(i) }
+        s
+      } else {
+        val l = length / 2
+        recurse(offset, l) + recurse(offset + l, length - l)
+      }
+
+      recurse(0, a.length)
+
+    }
 
     override def persist[A](a: Array[A]): Array[A] = a
 
