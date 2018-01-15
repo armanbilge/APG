@@ -63,7 +63,9 @@ object BiallelicCoalescentLikelihood {
       val dl = new DatumLikelihood[B, BiallelicSiteLikelihood, Lower](tag[B](false), like, bound)
       val flipped = new DatumLikelihood[B, BiallelicSiteLikelihood, Lower](tag[B](true), like, bound)
       if (flipped.evaluate.isInfinite && dl.evaluate.isInfinite)
-        throw new RuntimeException
+        throw new RuntimeException(s"sLikelihoods are infinite at site $i")
+      if (flipped.evaluate.isNaN || dl.evaluate.isNaN)
+        throw new RuntimeException(s"Encountered NaN at site $i: ${flipped.evaluate} or ${dl.evaluate}")
       val oddsRatio = math.exp(flipped.evaluate - dl.evaluate)
       if (flipped.evaluate.isInfinite)
         dl
