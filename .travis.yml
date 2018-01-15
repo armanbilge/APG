@@ -4,8 +4,9 @@ before_install:
 - cd mcmc
 - sbt "+publishLocal"
 - cd ..
+- export CPATH="$CPATH:${JAVA_HOME}/include/linux/"
 scala:
-- 2.12.2
+- 2.12.4
 jdk:
 - oraclejdk8
 script:
