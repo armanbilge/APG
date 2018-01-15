@@ -29,7 +29,7 @@ package object apg {
     override def sum(a: Array[Double]): Double = {
 
       def recurse(offset: Int, length: Int): Double = if (length < 128) {
-        var s: Float = 0
+        var s: Double = 0
         import spire.syntax.cfor.cforRange
         cforRange(offset until offset+length) { i => s += a(i) }
         s
