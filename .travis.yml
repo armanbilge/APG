@@ -2,12 +2,12 @@ language: scala
 before_install:
 - git clone https://github.com/armanbilge/mcmc.git
 - cd mcmc
-- sbt "+publishLocal"
+- sbt publishLocal
 - cd ..
-- export CPATH="$CPATH:${JAVA_HOME}/include/linux/"
+- export CPATH="$CPATH:$JAVA_HOME/include/:$JAVA_HOME/include/linux/"
 scala:
 - 2.12.4
 jdk:
 - oraclejdk8
 script:
-- sbt "+test"
+- sbt test
