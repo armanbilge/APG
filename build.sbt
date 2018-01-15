@@ -22,7 +22,7 @@ lazy val compileNative = taskKey[Seq[File]]("Compile native code")
 compileNative := {
   resourceManaged.value.mkdirs()
   val out = resourceManaged.value / "apg.jni"
-  Seq("sh", "-c", s"cc -O3 -ffast-math -fPIC -march=native -mtune=native $$CFLAGS -lc -shared -o $out src/main/c/apg/*.c").!
+  Seq("sh", "-c", s"cc -std=c99 -O3 -ffast-math -fPIC -march=native -mtune=native $$CFLAGS -lc -shared -o $out src/main/c/apg/*.c").!
   Seq(out)
 }
 (compile in Compile) <<= (compile in Compile).dependsOn(compileNative)
