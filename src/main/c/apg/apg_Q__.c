@@ -58,13 +58,11 @@ void solve_central_block_transposed(double* restrict x, double* restrict y, doub
 
 }
 
-JNIEXPORT jfloatArray JNICALL Java_apg_Q_00024_findOrthogonalVector
-  (JNIEnv* env, jobject this, jint N, jdouble u, jdouble v, jdouble gamma) {
+JNIEXPORT void JNICALL Java_apg_Q_00024_findOrthogonalVector
+  (JNIEnv* env, jobject this, jint N, jdouble u, jdouble v, jdouble gamma, jfloatArray jx) {
 
   int n, r, i;
-  int dim = APG_CALCULATE_DIMENSION(N);
 
-  jfloatArray jx = (*env)->NewFloatArray(env, dim);
   jfloat* restrict x = (*env)->GetPrimitiveArrayCritical(env, jx, NULL);
 
   double xn[N+1];
@@ -95,8 +93,6 @@ JNIEXPORT jfloatArray JNICALL Java_apg_Q_00024_findOrthogonalVector
   }
 
   (*env)->ReleasePrimitiveArrayCritical(env, jx, x, 0);
-
-  return jx;
 
 }
 
@@ -172,8 +168,8 @@ void solve(int N, double u, double v, double gamma, double complex * restrict y,
 
 }
 
-JNIEXPORT jfloatArray JNICALL Java_apg_Q_00024_expQTtx
-  (JNIEnv* env, jobject this, jint degree, jint steps, jint N, jdouble u, jdouble v, jdouble gamma, jdouble t, jfloatArray jx) {
+JNIEXPORT void JNICALL Java_apg_Q_00024_expQTtx
+  (JNIEnv* env, jobject this, jint degree, jint steps, jint N, jdouble u, jdouble v, jdouble gamma, jdouble t, jfloatArray jx, jfloatArray jy) {
 
   int n = APG_CALCULATE_DIMENSION(N);
   double complex * restrict ci = residues[degree-1];
@@ -212,13 +208,10 @@ JNIEXPORT jfloatArray JNICALL Java_apg_Q_00024_expQTtx
 
   }
 
-  jfloatArray jw = (*env)->NewFloatArray(env, n);
-  jfloat* restrict w = (*env)->GetPrimitiveArrayCritical(env, jw, NULL);
+  jfloat* restrict y = (*env)->GetPrimitiveArrayCritical(env, jy, NULL);
   for (i = 0; i < n; ++i) {
-    w[i] = creal(wc[i+1]);
+    y[i] = creal(wc[i+1]);
   }
-  (*env)->ReleasePrimitiveArrayCritical(env, jw, w, 0);
-
-  return jw;
+  (*env)->ReleasePrimitiveArrayCritical(env, jy, y, 0);
 
 }

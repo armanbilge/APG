@@ -12,16 +12,16 @@ extern "C" {
  * Method:    findOrthogonalVector
  * Signature: (IDDD)[D
  */
-JNIEXPORT jfloatArray JNICALL Java_apg_Q_00024_findOrthogonalVector
-  (JNIEnv *, jobject, jint, jdouble, jdouble, jdouble);
+JNIEXPORT void JNICALL Java_apg_Q_00024_findOrthogonalVector
+  (JNIEnv *, jobject, jint, jdouble, jdouble, jdouble, jfloatArray);
 
 /*
  * Class:     apg_Q__
  * Method:    expQTtx
  * Signature: (IIIDDDD[D)[D
  */
-JNIEXPORT jfloatArray JNICALL Java_apg_Q_00024_expQTtx
-  (JNIEnv *, jobject, jint, jint, jint, jdouble, jdouble, jdouble, jdouble, jfloatArray);
+JNIEXPORT void JNICALL Java_apg_Q_00024_expQTtx
+  (JNIEnv *, jobject, jint, jint, jint, jdouble, jdouble, jdouble, jdouble, jfloatArray, jfloatArray);
 
 #ifdef __cplusplus
 }

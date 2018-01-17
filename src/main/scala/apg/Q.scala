@@ -6,11 +6,21 @@ object Q {
 
   NativeUtils.loadLibraryFromJar("/apg.jni")
 
-  @native def findOrthogonalVector(N: Int, u: Double, v: Double, gamma: Double): Array[Float]
+  def findOrthogonalVector(N: Int, u: Double, v: Double, gamma: Double): Array[Float] = {
+    val x = new Array[Float](((N + 1) * (N + 1) + N - 1) / 2)
+    findOrthogonalVector(N, u, v, gamma, x)
+    x
+  }
 
-  def expQTtx(degree: Int, steps: Int, N: Int, u: Double, v: Double, gamma: Double, t: Double, x: F): F =
-    new F(N, expQTtx(degree, steps, N, u, v, gamma, t, x.f))
+  @native def findOrthogonalVector(N: Int, u: Double, v: Double, gamma: Double, x: Array[Float]): Unit
 
-  @native private[this] def expQTtx(degree: Int, steps: Int, N: Int, u: Double, v: Double, gamma: Double, t: Double, x: Array[Float]): Array[Float]
+  def expQTtx(degree: Int, steps: Int, N: Int, u: Double, v: Double, gamma: Double, t: Double, x: F): F = {
+    val y = new Array[Float](x.f.length)
+    expQTtx(degree, steps, N, u, v, gamma, t, x.f, y)
+    new F(N, y)
+  }
+
+
+  @native private[this] def expQTtx(degree: Int, steps: Int, N: Int, u: Double, v: Double, gamma: Double, t: Double, x: Array[Float], y: Array[Float]): Unit
 
 }
