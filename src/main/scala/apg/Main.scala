@@ -53,6 +53,7 @@ object Main extends App {
     type Pr = ExponentialMarkovPrior[Double @@ Theta, Double @@ X, IndexedSeq[Double @@ Theta]]
     type P = JointProbability[Double, L, Pr]
     val like: L = BiallelicCoalescentLikelihood[D, B, X, Mu, X, Theta](tag[Mu](config.mu), tag[X](0.5), intervals, sites)
+    System.gc()
     val prior: Pr = ExponentialMarkovPrior[Double @@ Theta, Double @@ X, IndexedSeq[Double @@ Theta]](config.intervals.view.map(_.theta).map(tag[Theta](_)).toIndexedSeq, tag[X](1.0))
     val post: P = new JointProbability[Double, L, Pr](like, prior)
 
@@ -75,6 +76,7 @@ object Main extends App {
       println((Traversable[Any](li._2, li._1._1.evaluate, li._1._1.p.evaluate, li._1._1.q.evaluate, mu.get(li._1._1)) ++ _theta.map(_.get(li._1._1)) ++ Traversable(li._1._1.p.fractionLit)).mkString("\t"))
       pw.println((Traversable[Any](li._2, li._1._1.evaluate, li._1._1.p.evaluate, li._1._1.q.evaluate, mu.get(li._1._1)) ++ _theta.map(_.get(li._1._1)) ++ Traversable(li._1._1.p.fractionLit)).mkString("\t"))
       pw.flush()
+      System.gc()
     }
 
   }
