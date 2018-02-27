@@ -16,9 +16,12 @@ def manypolymul(coeffs):
     return ft.reduce(polymul, coeffs, [1])
 
 fs = map(open, sys.argv[1:])
+z = None
 for l in zip(*fs):
     coeffs = [list(map(float, x.split())) for x in l]
-    p = manypolymul(coeffs) / manypolymul([1] * len(x) for x in coeffs)
+    if not z:
+        z = manypolymul([1] * len(x) for x in coeffs)
+    p = manypolymul(coeffs) / z
     pad = sum(map(len, coeffs)) - len(coeffs) - p.shape[0] + 1
     print_join(it.chain(map(str, p), it.repeat('0', pad)))
 
