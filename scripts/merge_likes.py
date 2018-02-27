@@ -18,7 +18,7 @@ def manypolymul(coeffs):
 fs = map(open, sys.argv[1:])
 for l in zip(*fs):
     coeffs = [list(map(float, x.split())) for x in l]
-    p = manypolymul(coeffs)
+    p = manypolymul(coeffs) / manypolymul([1] * len(x) for x in coeffs)
     pad = sum(map(len, coeffs)) - len(coeffs) - p.shape[0] + 1
     print_join(it.chain(map(str, p), it.repeat('0', pad)))
 
