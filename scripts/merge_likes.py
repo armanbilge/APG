@@ -20,9 +20,10 @@ fs = map(open, sys.argv[1:])
 z = None
 for l in zip(*fs):
     coeffs = [list(map(float, x.split())) for x in l]
+    p = manypolymul(coeffs)
     if z is None:
         z = manypolymul([1] * len(x) for x in coeffs)
-    p = manypolymul(coeffs) / z
+    p /= z[:len(p)]
     mp = np.max(p)
     p /= mp
     pad = sum(map(len, coeffs)) - len(coeffs) - p.shape[0] + 1
