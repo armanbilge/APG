@@ -7,7 +7,7 @@ import scala.collection.LinearSeq
 object ExpectedTreeLength {
 
   def intervalExpectation(theta: Double, length: Double, y0: IndexedSeq[Double], includeSingle: Boolean): Array[Double] = {
-    val Q = new UpperTriangularMatrix(y0.length)
+    val Q = new ArrayUpperTriangularMatrix(y0.length)
     for (i <- 2 until Q.n) {
       Q(0, i) = i
       Q(i, i) = - i * (i - 1) / (2.0 * theta)
@@ -16,7 +16,7 @@ object ExpectedTreeLength {
     if (includeSingle) {
       Q(0, 1) = 1
       val P = Q.eigenVectors
-      val Pp = Q.eigenVectors
+      val Pp = Q.eigenVectors.asInstanceOf[ArrayUpperTriangularMatrix]
       Pp(0, 1) = length
       Pp * (P `^-1 *` y0, Q.eigenValues).zipped.map((a, b) => a * math.exp(length * b))
     } else {

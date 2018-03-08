@@ -1,18 +1,10 @@
 package apg
 
-class UpperTriangularMatrix(val n: Int) {
+trait UpperTriangularMatrix {
 
-  val values = new Array[Double](n * (n + 1) / 2)
+  val n: Int
 
-  def index(i: Int, j: Int): Int = {
-    require(j >= i)
-    val nmi = n - i
-    (n * (n + 1) - nmi * (nmi + 1)) / 2 + (j - i)
-  }
-
-  def apply(i: Int, j: Int): Double = values(index(i, j))
-
-  def update(i: Int, j: Int, x: Double): Unit = values(index(i, j)) = x
+  def apply(i: Int, j: Int): Double
 
   def *(x: IndexedSeq[Double]): Array[Double] = {
     Array.tabulate(x.length) { i =>
@@ -34,7 +26,7 @@ class UpperTriangularMatrix(val n: Int) {
   }
 
   def eigenVectors: UpperTriangularMatrix = {
-    val P = new UpperTriangularMatrix(n)
+    val P = new ArrayUpperTriangularMatrix(n)
     for (i <- 0 until n) {
       P(i, i) = 1
       for (j <- (0 until i).reverse) {
