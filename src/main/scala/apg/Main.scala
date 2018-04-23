@@ -68,7 +68,7 @@ object Main extends App {
       _theta.sliding(2).map(x => AutoTuningMCMC.statify[P, Double, ScaleOperator[P, Double]](new ScaleOperator[P, Double](scaleFactor, x), 2.0))
     val thetaScaler = AutoTuningMCMC.statify[P, Double, ScaleOperator[P, Double]](new ScaleOperator[P, Double](scaleFactor, _theta), _theta.length)
     val upDownOp = if (estimateMu) Some(AutoTuningMCMC.statify[P, Double, UpDownOperator[P, Double]](new UpDownOperator[P, Double](scaleFactor, _theta, Traversable(mu)), _theta.length + 1.0)) else None
-    val tweak = like.lights.asInstanceOf[ParArray[DatumLikelihood[X, BiallelicSiteLikelihood, BiallelicSiteLikelihood, BiallelicCoalescentLikelihood.Lower]]].map(d => (math.log(d.entropy) - 1) / 2)
+    val tweak = like.lights.asInstanceOf[ParArray[DatumLikelihood[X, BiallelicSiteLikelihood, BiallelicSiteLikelihood, BiallelicCoalescentLikelihood.Lower]]].map(d => (math.exp(d.entropy) - 1) / 2)
     val ffo = AutoTuningMCMC.statify[P, Double, FocusedOperator[P, D[DatumLikelihood[X, BiallelicSiteLikelihood, BiallelicSiteLikelihood, BiallelicCoalescentLikelihood.Lower]], Double, FireFlyOperator[D, B, X, BiallelicSiteLikelihood, BiallelicSiteLikelihood, BiallelicCoalescentLikelihood.Lower]]](new FocusedOperator[P, D[DatumLikelihood[X, BiallelicSiteLikelihood, BiallelicSiteLikelihood, BiallelicCoalescentLikelihood.Lower]], Double, FireFlyOperator[D, B, X, BiallelicSiteLikelihood, BiallelicSiteLikelihood, BiallelicCoalescentLikelihood.Lower]](new FireFlyOperator[D, B, X, BiallelicSiteLikelihood, BiallelicSiteLikelihood, BiallelicCoalescentLikelihood.Lower](i => tweak.apply(i.toInt)), _lights), 1)
 
     val pw = new PrintWriter(fn + ".log")
