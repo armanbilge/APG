@@ -1,40 +1,29 @@
 package apg
 
-import mcmc.{Operator, Probability}
+import mcmc.{Categorical, Operator, Probability}
 import spire.random.Generator
-import spire.random.rng.MersenneTwister64
 
 import scala.language.higherKinds
 
-class FireFlyOperator[D[X], Z[X], B, P <: Probability[Double], L <: Probability[Double]](val `q_d->b`: Double, val rng: Array[Long] => Generator)(implicit distributed: Distributed[D, Z]) extends Operator[D[DatumLikelihood[B, P, L]], Double] {
+class FireFlyOperator[D[X], Z[X], B, P <: Probability[Double], L1 <: Probability[Double], L2 <: Probability[Double]](val tweakProb: Long => Double)(implicit distributed: Distributed[D, Z], rng: Generator) extends Operator[D[DatumLikelihood[B, P, L1, L2]], Double] {
 
-  override def apply(d: D[DatumLikelihood[B, P, L]]): D[DatumLikelihood[B, P, L]] = {
-    val `q_d->b` = this.`q_d->b`
+  override def apply(d: D[DatumLikelihood[B, P, L1, L2]]): D[DatumLikelihood[B, P, L1, L2]] = {
+    val tweakProb = this.tweakProb
     val rng = this.rng
     import distributed._
-    d.synchronizedMap(i => rng(Array(System.nanoTime() + i * (1 << 14)))) { rng =>
-      { dl =>
-        if (dl.lit) {
-          val u = rng.nextDouble()
-          val Ltilde = (dl.probability.evaluate - dl.lower.evaluate) / dl.lower.evaluate
-          if (`q_d->b` / Ltilde > u)
-            dl.flipped
-          else
-            dl
-        } else if (rng.nextDouble() < `q_d->b`) {
-          val u = rng.nextDouble()
-          val Ltilde = (dl.probability.evaluate - dl.lower.evaluate) / dl.lower.evaluate
-          if (Ltilde / `q_d->b` > u)
-            dl.flipped
-          else
-            dl
-        } else
-          dl
-      }
+    d.zipWithIndexMap { (dl, i) =>
+      if (rng.nextDouble() < tweakProb(i)) {
+        val on = dl.on
+        val dim = dl.dim
+        val off = dl.off
+        import spire.std.double._
+        rng.next(Categorical(Map(on -> math.exp(on.evaluate), dim -> math.exp(dim.evaluate), off -> math.exp(off.evaluate))))
+      } else
+        dl
     }.persist()
   }
 
-  override def hastingsRatio(x: D[DatumLikelihood[B, P, L]], y: D[DatumLikelihood[B, P, L]]): Double = {
+  override def hastingsRatio(x: D[DatumLikelihood[B, P, L1, L2]], y: D[DatumLikelihood[B, P, L1, L2]]): Double = {
     import distributed._
     x.map(_.evaluate).sum - y.map(_.evaluate).sum
   }

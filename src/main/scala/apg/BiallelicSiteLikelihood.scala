@@ -1,109 +1,118 @@
 package apg
 
-import apg.BiallelicSiteLikelihood.CachedF
+import apg.BiallelicSiteLikelihood.IntervalIntegrator
 import mcmc.Probability
 
-import scala.collection.LinearSeq
+class BiallelicSiteLikelihood(val intervalIntegrator: IntervalIntegrator) extends Probability[Double] {
 
-class BiallelicSiteLikelihood(val piRed: Double, infiniteInterval: => InfiniteBiallelicCoalescentInterval, val partials: LinearSeq[Int => Double], val F: CachedF) extends Probability[Double] with Serializable {
+  override lazy val evaluate: Double = intervalIntegrator.probability
 
-  require(0 < piRed && piRed < 1.0)
-
-  lazy val evaluate: Double = F.getFC._2
-
-  def updatedCoalRate(i: Int, coalRate: Double, infiniteInterval: => InfiniteBiallelicCoalescentInterval): BiallelicSiteLikelihood = new BiallelicSiteLikelihood(piRed, infiniteInterval, partials, F.updatedCoalRate(i, coalRate))
+  def updateIntegrators(integrators: PartialFunction[Int, Either[F => F, F => Double]]) =
+    new BiallelicSiteLikelihood(intervalIntegrator.updateIntegrators(integrators))
 
 }
 
 object BiallelicSiteLikelihood {
 
-  def apply(piRed: Double, infiniteInterval: => InfiniteBiallelicCoalescentInterval, intervals: LinearSeq[BiallelicCoalescentInterval], partials: LinearSeq[Int => Double]): BiallelicSiteLikelihood =
-    new BiallelicSiteLikelihood(piRed, infiniteInterval, partials, createCachedF(intervals, partials))
-
-  def createCachedF(intervals: LinearSeq[BiallelicCoalescentInterval], partials: LinearSeq[Int => Double]): CachedF = {
+  def apply(intervals: Seq[BiallelicCoalescentInterval], partials: Seq[IndexedSeq[Double]], integrators: Seq[Either[F => F, F => Double]]): BiallelicSiteLikelihood = {
     val intervalsIterator = intervals.iterator
     val nextIntervalsIterator = intervals.iterator.drop(1)
     val partialsIterator = partials.iterator
+    val integratorsIterator = integrators.iterator
     def handleIntervals() = {
       val interval = intervalsIterator.next()
       val nextInterval = if (nextIntervalsIterator.hasNext) Some(nextIntervalsIterator.next()) else None
       (interval, nextInterval.exists(_.coalIndex != interval.coalIndex))
     }
-    val (int, cache) = handleIntervals()
-    var F: CachedF = new Base(int, partialsIterator.next(), cache)
+    val (interval, cache) = handleIntervals()
+    var intervalIntegrator: IntervalIntegrator = if (cache) new Base(interval.m, partialsIterator.next(), integratorsIterator.next()) with Cached else new Base(interval.m, partialsIterator.next(), integratorsIterator.next())
     while (intervalsIterator.hasNext) {
-      val (int, cache) = handleIntervals()
-      F = new Nested(int, if (int.k > 0) partialsIterator.next() else _ => 0.0, F, cache)
+      val (interval, cache) = handleIntervals()
+      intervalIntegrator = if (cache)
+        new Nested(intervalIntegrator, interval.m, interval.k, if (interval.k > 0) partialsIterator.next() else IndexedSeq.empty[Double], integratorsIterator.next()) with Cached
+      else
+        new Nested(intervalIntegrator, interval.m, interval.k, if (interval.k > 0) partialsIterator.next() else IndexedSeq.empty[Double], integratorsIterator.next())
     }
-    F
+    new BiallelicSiteLikelihood(intervalIntegrator)
   }
 
-  abstract class CachedF(fc: => (F, Double), val interval: BiallelicCoalescentInterval, cache: Boolean) extends Serializable {
-    private[this] var cachedFC: (F, Double) = null
-    def getFC: (F, Double) = if (cachedFC != null) {
-      cachedFC
-    } else {
-      val calculatedFC = {
-        val (fp, cp) = fc
-        interval match {
-          case interval: FiniteBiallelicCoalescentInterval =>
-            val c = (for (n <- 1 to fp.N; r <- 0 to n) yield fp(n, r)).max
-            val f = F(fp.N)
-            for (n <- 1 to fp.N; r <- 0 to n) f(n, r) = fp(n, r) / c
-            (Q.expQTtx(12, 1, interval.m, interval.u, interval.v, interval.coalRate, interval.length, f), c * cp)
-          case interval: InfiniteBiallelicCoalescentInterval =>
-            import spire.std.array._
-            import spire.std.float._
-            import spire.syntax.innerProductSpace._
-            (null, cp * (fp.f dot interval.pi))
+  abstract class IntervalIntegrator(val integrator: Either[F => F, F => Double], val index: Int) {
+
+    def initial: F
+
+    def probability: Double = integrator match {
+      case Right(f) => f(initial)
+    }
+
+    def integrated: F = integrator match {
+      case Left(f) => f(initial)
+    }
+
+    def updateIntegrators(integrators: PartialFunction[Int, Either[F => F, F => Double]]): IntervalIntegrator
+
+  }
+
+  trait Cached extends IntervalIntegrator {
+    override lazy val probability: Double = super.probability
+    override lazy val integrated: F = super.integrated
+  }
+
+  class Nested(previous: IntervalIntegrator, val m: Int, val k: Int, val partial: IndexedSeq[Double], _integrator: Either[F => F, F => Double]) extends IntervalIntegrator(_integrator, previous.index + 1) {
+
+    override def initial: F = if (k > 0) {
+      val previousF = previous.integrated
+      val initial = F(m, previousF.R + partial.length - 1)
+      import spire.syntax.cfor._
+      var i = initial.index(k+1, 0)
+      var j = 0
+      cforRange((k+1) to initial.N) { n =>
+        val R = math.min(n-k, previousF.R)
+        cforRange(0 until partial.length) { l =>
+          cforRange(0 to R) { r =>
+            initial.f(i) += previousF.f(j) * partial(l) * HypergeometricPMF(n, r + l, k, l)
+            i += 1
+            j += 1
+          }
+          if (l < partial.length - 1) {
+            i -= R
+            j -= R + 1
+          } else {
+            i += math.min(n, initial.R) - (R + partial.length - 1)
+          }
         }
       }
-      if (cache) {
-        cachedFC = calculatedFC
-      }
-      calculatedFC
-    }
-    def updatedCoalRate(i: Int, coalRate: Double): CachedF
-  }
+      initial
+    } else previous.integrated
 
-  class Nested(interval: BiallelicCoalescentInterval, partial: Int => Double, previousF: CachedF, cache: Boolean) extends CachedF({
-    val (previousf, previousc) = previousF.getFC
-    val F = if (interval.k > 0) {
-      val F = apg.F(interval.m)
-      val k = interval.k
-      for (i <- 0 to k; n <- 1 to previousf.N; r <- 0 to n)
-        F(n + k, r + i) = F(n + k, r + i) + math.max(previousf(n, r), 0) * (partial(i) * HypergeometricPMF(n + k, r + i, k).apply(i)).toFloat
-      F
-    } else previousf
-    (F, previousc)
-  }, interval, cache) with Serializable {
-
-    def updatedCoalRate(i: Int, coalRate: Double): Nested = {
-      val intervalp = if (interval.coalIndex == i) interval.updatedCoalRate(coalRate) else interval
-      val previousFp = previousF.updatedCoalRate(i, coalRate)
-      if ((interval ne intervalp) || (previousF ne previousFp))
-        new Nested(intervalp, partial, previousFp, cache)
+    override def updateIntegrators(integrators: PartialFunction[Int, Either[F => F, F => Double]]): IntervalIntegrator = {
+      val previous = this.previous.updateIntegrators(integrators)
+      val integrator = integrators.applyOrElse(index, (_: Int) => this.integrator)
+      if ((previous ne this.previous) || (integrator ne this.integrator))
+        if (this.isInstanceOf[Cached])
+          new Nested(previous, m, k, partial, integrator) with Cached
+        else
+          new Nested(previous, m, k, partial, integrator)
       else
         this
     }
 
   }
 
-  class Base(interval: BiallelicCoalescentInterval, baseF: F, cache: Boolean) extends CachedF((baseF, 1), interval, cache) with Serializable {
+  class Base(val initial: F, _integrator: Either[F => F, F => Double]) extends IntervalIntegrator(_integrator, 0) {
 
-    def this(interval: BiallelicCoalescentInterval, partial: Int => Double, cache: Boolean) = this(interval, {
-      val f = F(interval.m)
-      for (r <- 0 to interval.m)
-        f(interval.m, r) = partial(r).toFloat
+    def this(m: Int, partial: IndexedSeq[Double], integrator: Either[F => F, F => Double]) = this({
+      val f = F(m, partial.length - 1)
+      for (r <- 0 to f.R)
+        f(m, r) = partial(r)
       f
-    }, cache)
+    }, integrator)
 
-    def updatedCoalRate(i: Int, coalRate: Double): Base = {
-      if (interval.coalIndex == i)
-        new Base(interval.updatedCoalRate(coalRate), baseF, cache)
+    override def updateIntegrators(integrators: PartialFunction[Int, Either[F => F, F => Double]]): Base = integrators.andThen { int =>
+      if (Base.this.isInstanceOf[Cached])
+        new Base(initial, int) with Cached
       else
-        this
-    }
+        new Base(initial, int)
+    }.applyOrElse(index, (_: Int) => this)
 
   }
 

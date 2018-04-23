@@ -2,7 +2,8 @@
 #include "apg_Q__.h"
 
 #define MAX_DEG 12
-#define APG_CALCULATE_DIMENSION(N) ((((N)+1) * ((N)+1) + (N) - 1) / 2)
+#define APG_CALCULATE_DIMENSION(N, R) ((R)+1)*((R)+2)/2-1 + ((N)-(R))*((R)+1)
+#define APG_MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
 double complex residues[MAX_DEG][MAX_DEG] = {
                                               {-0.6518555207051950+0.0000000000000000*I},
@@ -59,11 +60,11 @@ void solve_central_block_transposed(double* restrict x, double* restrict y, doub
 }
 
 JNIEXPORT void JNICALL Java_apg_Q_00024_findOrthogonalVector
-  (JNIEnv* env, jobject this, jint N, jdouble u, jdouble v, jdouble gamma, jfloatArray jx) {
+  (JNIEnv* env, jobject this, jint N, jdouble u, jdouble v, jdouble gamma, jdoubleArray jx) {
 
   int n, r, i;
 
-  jfloat* restrict x = (*env)->GetPrimitiveArrayCritical(env, jx, NULL);
+  jdouble* restrict x = (*env)->GetPrimitiveArrayCritical(env, jx, NULL);
 
   double xn[N+1];
   double yn[N+1];
@@ -74,7 +75,7 @@ JNIEXPORT void JNICALL Java_apg_Q_00024_findOrthogonalVector
   x[0] = u / z;
   x[1] = v / z;
 
-  float* restrict xptr = x + 2;
+  double* xptr = x + 2;
 
   for (n = 2; n <= N; ++n) {
 
@@ -96,7 +97,7 @@ JNIEXPORT void JNICALL Java_apg_Q_00024_findOrthogonalVector
 
 }
 
-void solve_central_block(double complex * restrict y, double complex offset, int n, double u, double v, double gamma, double complex * restrict x) {
+void solve_central_block(double complex * restrict y, double complex offset, int n, int R, double u, double v, double gamma, double complex * restrict x) {
 
   double complex K = - (gamma * (n * (n-1))) / 2.0 - n * v + offset;
 
@@ -107,61 +108,62 @@ void solve_central_block(double complex * restrict y, double complex offset, int
   d[0] = K;
   e[0] = y[0];
 
-  for (r = 1; r <= n; ++r) {
+  for (r = 1; r <= R; ++r) {
     m = (r * u) / d[r-1];
     d[r] = K + r * (v-u) - m * ((n-r+1) * v);
     e[r] = y[r] - m * e[r-1];
   }
 
-  x[n] = e[n] / d[n];
-
-  for (r = n-1; r >= 0; --r) {
+  x[R] = e[R] / d[R];
+  for (r = R-1; r >= 0; --r) {
     x[r] = (e[r] - (n-r) * v * x[r+1]) / d[r];
   }
 
 }
 
-void multiply_upper_block(double complex * restrict x, int n, double gamma, double complex * restrict y) {
+void multiply_upper_block(double complex * restrict x, int n, int R, double gamma, double complex * restrict y) {
   int r;
-  for (r = 0; r <= n; ++r) {
-    y[r] = (gamma * (n-r) * (n+1) / 2.0) * x[r] + (gamma * r * (n+1) / 2.0) * x[r+1];
+  for (r = 0; r <= APG_MIN(n, R); ++r) {
+    y[r] = (gamma * (n-r) * (n+1) / 2.0) * x[r];
+    if (r+1 <= R)
+      y[r] += (gamma * r * (n+1) / 2.0) * x[r+1];
   }
 }
 
-void solve(int N, double u, double v, double gamma, double complex * restrict y, double complex offset, double complex * restrict x) {
+void solve(int N, int R, double u, double v, double gamma, double complex * restrict y, double complex offset, double complex * restrict x) {
 
-  int dim = APG_CALCULATE_DIMENSION(N) + 1;
+  int dim = APG_CALCULATE_DIMENSION(N, R);
 
   int i, n, r;
-  double complex xn[N+1];
-  double complex yn[N+1];
+  double complex xn[R+1];
+  double complex yn[R+1];
 
-  double complex * restrict xptr = x + (dim - 1 - N);
-  double complex * restrict yptr = y + (dim - 1 - N);
+  double complex * xptr = x + (dim - R);
+  double complex * yptr = y + (dim - R);
 
-  for (i = 0; i <= N; ++i) {
+  for (i = 0; i <= R; ++i) {
     yn[i] = yptr[i];
   }
 
-  solve_central_block(yn, offset, N, u, v, gamma, xn);
+  solve_central_block(yn, offset, N, R, u, v, gamma, xn);
 
-  for (i = 0; i <= N; ++i) {
+  for (i = 0; i <= R; ++i) {
     xptr[i] = xn[i];
   }
 
   for (n = N-1; n >= 1; --n) {
 
-    multiply_upper_block(xn, n, gamma, yn);
+    multiply_upper_block(xn, n, R, gamma, yn);
 
-    xptr -= n+1;
-    yptr -= n+1;
-    for (r = 0; r <= n; ++r) {
+    xptr -= APG_MIN(n, R)+1;
+    yptr -= APG_MIN(n, R)+1;
+    for (r = 0; r <= APG_MIN(n, R); ++r) {
       yn[r] = yptr[r] - yn[r];
     }
 
-    solve_central_block(yn, offset, n, u, v, gamma, xn);
+    solve_central_block(yn, offset, n, APG_MIN(n, R), u, v, gamma, xn);
 
-    for (i = 0; i <= n; ++i) {
+    for (i = 0; i <= APG_MIN(n, R); ++i) {
       xptr[i] = xn[i];
     }
   }
@@ -169,11 +171,11 @@ void solve(int N, double u, double v, double gamma, double complex * restrict y,
 }
 
 JNIEXPORT void JNICALL Java_apg_Q_00024_expQTtx
-  (JNIEnv* env, jobject this, jint degree, jint steps, jint N, jdouble u, jdouble v, jdouble gamma, jdouble t, jfloatArray jx, jfloatArray jy) {
+  (JNIEnv* env, jobject this, jint degree, jint steps, jint N, jint R, jdouble u, jdouble v, jdouble gamma, jdouble t, jdoubleArray jx, jdoubleArray jy) {
 
-  int n = APG_CALCULATE_DIMENSION(N);
-  double complex * restrict ci = residues[degree-1];
-  double complex * restrict zi = poles[degree-1];
+  int n = APG_CALCULATE_DIMENSION(N, R);
+  double complex * ci = residues[degree-1];
+  double complex * zi = poles[degree-1];
 
   int i, j, k;
   double complex c_i, offset;
@@ -182,7 +184,7 @@ JNIEXPORT void JNICALL Java_apg_Q_00024_expQTtx
   double complex wc[n+1];
   double complex vc[n+1];
 
-  jfloat* restrict x = (*env)->GetPrimitiveArrayCritical(env, jx, NULL);
+  jdouble* restrict x = (*env)->GetPrimitiveArrayCritical(env, jx, NULL);
   for (i = 0; i < n; ++i) {
     wc[i+1] = x[i];
   }
@@ -199,7 +201,7 @@ JNIEXPORT void JNICALL Java_apg_Q_00024_expQTtx
 
     for (i = 0; i < degree; ++i) {
       offset = - zi[i] / stepsize;
-      solve(N, u, v, gamma, vc, offset, xc);
+      solve(N, R, u, v, gamma, vc, offset, xc);
       c_i = ci[i];
       for (j = 1; j < n+1; ++j) {
         wc[j] += c_i * xc[j];
@@ -208,7 +210,7 @@ JNIEXPORT void JNICALL Java_apg_Q_00024_expQTtx
 
   }
 
-  jfloat* restrict y = (*env)->GetPrimitiveArrayCritical(env, jy, NULL);
+  jdouble* restrict y = (*env)->GetPrimitiveArrayCritical(env, jy, NULL);
   for (i = 0; i < n; ++i) {
     y[i] = creal(wc[i+1]);
   }

@@ -10,18 +10,18 @@ extern "C" {
 /*
  * Class:     apg_Q__
  * Method:    findOrthogonalVector
- * Signature: (IDDD)[D
+ * Signature: (IDDD[D)V
  */
 JNIEXPORT void JNICALL Java_apg_Q_00024_findOrthogonalVector
-  (JNIEnv *, jobject, jint, jdouble, jdouble, jdouble, jfloatArray);
+  (JNIEnv *, jobject, jint, jdouble, jdouble, jdouble, jdoubleArray);
 
 /*
  * Class:     apg_Q__
  * Method:    expQTtx
- * Signature: (IIIDDDD[D)[D
+ * Signature: (IIIIDDDD[D[D)V
  */
 JNIEXPORT void JNICALL Java_apg_Q_00024_expQTtx
-  (JNIEnv *, jobject, jint, jint, jint, jdouble, jdouble, jdouble, jdouble, jfloatArray, jfloatArray);
+  (JNIEnv *, jobject, jint, jint, jint, jint, jdouble, jdouble, jdouble, jdouble, jdoubleArray, jdoubleArray);
 
 #ifdef __cplusplus
 }
