@@ -15,7 +15,7 @@ libraryDependencies ++= { scalaVersion.value match {
   case "2.11.11" => Seq("org.apache.spark" %% "spark-core" % "2.2.0" % Provided)
   case _ => Seq.empty
 }}
-libraryDependencies += "org.compevol" %% "mcmc" % "0.5"
+libraryDependencies += "org.compevol" %% "mcmc" % "0.5.1"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test"
 
 lazy val compileNative = taskKey[Seq[File]]("Compile native code")
