@@ -55,19 +55,18 @@ object BiallelicCoalescentLikelihood {
 
   def apply[D[X], I[X], B, M, Θ](mu: Double @@ M, coalIntervals: LinearSeq[CoalescentInterval[Θ]], data: D[LinearSeq[TimePoint]])(implicit distributed: Distributed[D, I], rng: Generator): BiallelicCoalescentLikelihood[D, I, B, M, Θ] = {
 
-    apply[D, I, B, M, Θ]((i: Int, like: BiallelicSiteLikelihood, lower1: BiallelicSiteLikelihood, lower2: Lower) => {
-      val on = new DatumLikelihood[B, BiallelicSiteLikelihood, BiallelicSiteLikelihood, Lower](tag[B](2), like, lower1, lower2)
+    apply[D, I, B, M, Θ]((i: Int, like: () => BiallelicSiteLikelihood, lower1: () => BiallelicSiteLikelihood, lower2: Lower) => {
+      val on = new DatumLikelihood[B, BiallelicSiteLikelihood, BiallelicSiteLikelihood, Lower](tag[B](2), like(), lower1(), lower2)
       val dim = on.dim
       val off = on.off
       import spire.std.double._
-      val P = math.exp(on.evaluate) + math.exp(dim.evaluate) + math.exp(off.evaluate)
-      val p = IndexedSeq(math.exp(on.evaluate)/P, math.exp(dim.evaluate)/P, math.exp(off.evaluate)/P)
-      rng.next(Categorical(Map(on -> math.exp(on.evaluate), dim -> math.exp(dim.evaluate), off -> math.exp(off.evaluate))))
+      val r = rng.next(Categorical(Map(2 -> math.exp(on.evaluate), 1 -> math.exp(dim.evaluate), 0 -> math.exp(off.evaluate))))
+      new DatumLikelihood[B, BiallelicSiteLikelihood, BiallelicSiteLikelihood, Lower](tag[B](r), like(), lower1(), lower2)
     }, mu, coalIntervals, data)
 
   }
 
-  def apply[D[X], I[X], B, M, Θ](f: (Int, BiallelicSiteLikelihood, BiallelicSiteLikelihood, Lower) => DatumLikelihood[B, BiallelicSiteLikelihood, BiallelicSiteLikelihood, Lower], mu: Double @@ M, coalIntervals: LinearSeq[CoalescentInterval[Θ]], data: D[LinearSeq[TimePoint]])(implicit distributed: Distributed[D, I]): BiallelicCoalescentLikelihood[D, I, B, M, Θ] = {
+  def apply[D[X], I[X], B, M, Θ](f: (Int, () => BiallelicSiteLikelihood, () => BiallelicSiteLikelihood, Lower) => DatumLikelihood[B, BiallelicSiteLikelihood, BiallelicSiteLikelihood, Lower], mu: Double @@ M, coalIntervals: LinearSeq[CoalescentInterval[Θ]], data: D[LinearSeq[TimePoint]])(implicit distributed: Distributed[D, I]): BiallelicCoalescentLikelihood[D, I, B, M, Θ] = {
 
     import distributed._
 
@@ -86,7 +85,8 @@ object BiallelicCoalescentLikelihood {
         val like = BiallelicSiteLikelihood(intervals, partials, eitherExactIntegrators)
         val lower2 = new Lower(partials.map(_.head).product, constantSiteLike.evaluate)
         if (lower2.evaluate / like.evaluate > 0.99) {
-          (0.0, like, BiallelicSiteLikelihood(intervals, partials.map(p => p.take(p.zipWithIndex.maxBy(_._1)._2 + 1)), eitherExactIntegrators), lower2)
+          val newPartials = partials.map(p => p.take(p.zipWithIndex.maxBy(_._1)._2 + 1))
+          (0.0, () => BiallelicSiteLikelihood(intervals, partials, eitherExactIntegrators), () => BiallelicSiteLikelihood(intervals, newPartials, eitherExactIntegrators), lower2)
         } else {
           val take = partials.map(_ => 1).toArray
           var expectation = Double.MaxValue
@@ -116,8 +116,7 @@ object BiallelicCoalescentLikelihood {
             take(i) -= 1
           }
           val newPartials = (partials, take).zipped.map(_.take(_))
-          val lower1 = BiallelicSiteLikelihood(intervals, newPartials, eitherExactIntegrators)
-          (expectation, like, lower1, lower2)
+          (expectation, () => BiallelicSiteLikelihood(intervals, partials, eitherExactIntegrators), () => BiallelicSiteLikelihood(intervals, newPartials, eitherExactIntegrators), lower2)
         }
       }
       val x = minimizeExpectation(partials)
