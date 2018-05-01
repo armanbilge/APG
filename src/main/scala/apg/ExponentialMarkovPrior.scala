@@ -3,16 +3,16 @@ package apg
 import mcmc.Probability
 import monocle.Lens
 import monocle.function.At
-import org.apache.commons.math3.distribution.GammaDistribution
+import org.apache.commons.math3.distribution.{GammaDistribution, LogNormalDistribution}
 
 class ExponentialMarkovPrior[T <: Double, S <: Double, C <: Traversable[T]](val chain: C, val shape: S) extends Probability[Double] {
 
   lazy val evaluate: Double = {
-    - math.log(chain.head) + chain.toIterator.sliding(2).withPartial(false).map { t =>
+    new LogNormalDistribution(null, 12.7, 1.75).logDensity(chain.head) + chain.toIterator.sliding(2).withPartial(false).map { t =>
       val mean = t.head
       val x = t.tail.head
       val scale = mean / shape
-      new GammaDistribution(shape, scale).logDensity(x)
+      new GammaDistribution(null, shape, scale).logDensity(x)
     }.sum
   }
 
