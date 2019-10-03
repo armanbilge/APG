@@ -1,7 +1,7 @@
 name := "APG"
 version := "0.1"
 organization := "org.compevol"
-scalaVersion := "2.12.4"
+scalaVersion := "2.12.10"
 crossScalaVersions := Seq("2.11.11", scalaVersion.value)
 scalacOptions := { scalaVersion.value match {
   case "2.11.11" => Seq("-optimize")
@@ -22,8 +22,9 @@ lazy val compileNative = taskKey[Seq[File]]("Compile native code")
 compileNative := {
   resourceManaged.value.mkdirs()
   val out = resourceManaged.value / "apg.jni"
+  import scala.sys.process._
   Seq("sh", "-c", s"gcc -std=c99 -O3 -ffast-math -fPIC -march=native -mtune=native $$CFLAGS -lc -shared -o $out src/main/c/apg/*.c").!
   Seq(out)
 }
-(compile in Compile) <<= (compile in Compile).dependsOn(compileNative)
+(compile in Compile) := (compile in Compile).dependsOn(compileNative).value
 resourceGenerators in Compile += compileNative.taskValue
