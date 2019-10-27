@@ -1,5 +1,5 @@
 name := "APG"
-version := "0.1"
+version := "0.2"
 organization := "org.compevol"
 scalaVersion := "2.12.10"
 crossScalaVersions := Seq("2.11.11", scalaVersion.value)
