@@ -53,7 +53,7 @@ object Main extends App {
 
     val partitionWeights = {
       val siteCounts = partitions.map { case (_, sites) => sites.size }
-      val total = siteCounts.sum
+      val total = siteCounts.sum.toDouble
       siteCounts.map(_ / total).toArray
     }
 
