@@ -2,6 +2,7 @@ package apg
 
 import apg.BiallelicSiteLikelihood.IntervalIntegrator
 import mcmc.Probability
+import spire.math.Fractional
 
 class BiallelicSiteLikelihood(val intervalIntegrator: IntervalIntegrator) extends Probability[Double] {
 
@@ -69,7 +70,7 @@ object BiallelicSiteLikelihood {
         val R = math.min(n-k, previousF.R)
         cforRange(0 until partial.length) { l =>
           cforRange(0 to R) { r =>
-            initial.f(i) += previousF.f(j) * partial(l) * HypergeometricPMF(n, r + l, k, l)
+            initial.f(i) += previousF.f(j) * Fractional[FP].fromDouble(partial(l) * HypergeometricPMF(n, r + l, k, l))
             i += 1
             j += 1
           }
@@ -103,7 +104,7 @@ object BiallelicSiteLikelihood {
     def this(m: Int, partial: IndexedSeq[Double], integrator: Either[F => F, F => Double]) = this({
       val f = F(m, partial.length - 1)
       for (r <- 0 to f.R)
-        f(m, r) = partial(r)
+        f(m, r) = Fractional[FP].fromDouble(partial(r))
       f
     }, integrator)
 

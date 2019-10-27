@@ -3,6 +3,8 @@ import scala.reflect.ClassTag
 
 package object apg {
 
+  type FP = Float
+
   implicit object ArrayIsDistributed extends Distributed[Array, Some] {
 
     override def head[A](a: Array[A]): A = genericArrayOps(a).head

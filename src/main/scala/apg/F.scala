@@ -1,12 +1,12 @@
 package apg
 
-class F(val N: Int, val R: Int, val f: Array[Double]) {
+class F(val N: Int, val R: Int, val f: Array[FP]) {
 
   def index(n: Int, r: Int): Int = math.min(n,R)*(math.min(n,R)+1)/2-1 + math.max(n-R,0)*(R+1) + r
 
-  def apply(n: Int, r: Int): Double = f(index(n, r))
+  def apply(n: Int, r: Int): FP = f(index(n, r))
 
-  def update(n: Int, r: Int, x: Double): Unit = f(index(n, r)) = x
+  def update(n: Int, r: Int, x: FP): Unit = f(index(n, r)) = x
 
 }
 
