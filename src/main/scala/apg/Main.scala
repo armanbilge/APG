@@ -86,10 +86,10 @@ object Main extends App {
     }
 
     val pw = new PrintWriter(fn + ".log")
-    pw.println((Traversable("state", "joint", "likelihood", "prior", "mu") ++ partitions.indices.map("mu_" + _) ++ intervals.indices.map("theta_" + _) ++ partitions.indices.flatMap(i => Traversable(s"on_$i", s"dim_$i"))).mkString("\t"))
+    pw.println((Traversable("state", "joint", "likelihood") ++ partitions.indices.map("likelihood_" + _) ++ Traversable("prior", "mu") ++ partitions.indices.map("mu_" + _) ++ intervals.indices.map("theta_" + _) ++ partitions.indices.flatMap(i => Traversable(s"on_$i", s"dim_$i"))).mkString("\t"))
     AutoTuningMCMC.chain[Double, P](post, config.tuningDelay.getOrElse(config.length / 100), IndexedSeq[OperatorState[P, Double, O] forSome {type O <: Operator[P, Double]}](muScaler, thetaScaler) ++ upDownOp ++ muScalers ++ thetaScalers ++ ffos).toIterable.take(config.length + 1).zipWithIndex.filter(_._2 % config.frequency == 0).foreach { case ((state, _), i) =>
       println((Traversable[Any](i, state.evaluate, state.p.evaluate, state.q.evaluate, weightedMean(_mu.map(_.get(state)))) ++ _theta.map(_.get(state))).mkString("\t"))
-      pw.println((Traversable[Any](i, state.evaluate, state.p.evaluate, state.q.evaluate, weightedMean(_mu.map(_.get(state)))) ++ _mu.map(_.get(state)) ++ _theta.map(_.get(state)) ++ state.p.ps.flatMap(l => Traversable(l.fractionOn, l.fractionDim))).mkString("\t"))
+      pw.println((Traversable[Any](i, state.evaluate, state.p.evaluate) ++ state.p.ps.map(_.evaluate) ++ Traversable[Any](state.q.evaluate, weightedMean(_mu.map(_.get(state)))) ++ _mu.map(_.get(state)) ++ _theta.map(_.get(state)) ++ state.p.ps.flatMap(l => Traversable(l.fractionOn, l.fractionDim))).mkString("\t"))
       pw.flush()
     }
 
