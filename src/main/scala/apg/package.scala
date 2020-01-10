@@ -1,9 +1,23 @@
 import scala.collection.parallel.mutable.ParArray
 import scala.reflect.ClassTag
 
+import spire.syntax.cfor.cforRange
+
 package object apg {
 
   type FP = Float
+
+  def kahanSummation(a: Array[Double]): Double = {
+    var sum = 0.0
+    var c = 0.0
+    cforRange(0 until a.length) { i =>
+      val y = a(i) - c
+      val t = sum + y
+      c = (t - sum) - y
+      sum = t
+    }
+    sum
+  }
 
   implicit object ArrayIsDistributed extends Distributed[Array, Some] {
 
@@ -28,21 +42,7 @@ package object apg {
 
     def size[A](a: Array[A]): Long = a.length
 
-    override def sum(a: Array[Double]): Double = {
-
-      def recurse(offset: Int, length: Int): Double = if (length < 128) {
-        var s: Double = 0
-        import spire.syntax.cfor.cforRange
-        cforRange(offset until offset+length) { i => s += a(i) }
-        s
-      } else {
-        val l = length / 2
-        recurse(offset, l) + recurse(offset + l, length - l)
-      }
-
-      recurse(0, a.length)
-
-    }
+    override def sum(a: Array[Double]): Double = kahanSummation(a)
 
     override def persist[A](a: Array[A]): Array[A] = a
 
@@ -77,7 +77,7 @@ package object apg {
 
     def size[A](a: ParArray[A]): Long = a.length
 
-    override def sum(a: ParArray[Double]): Double = a.sum
+    override def sum(a: ParArray[Double]): Double = kahanSummation(a.toArray)
 
     override def persist[A](a: ParArray[A]): ParArray[A] = a
 
